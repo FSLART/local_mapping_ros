@@ -25,6 +25,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-target_link_libraries(local_mapping_ros local_mapping_core)
-
 ament_package()
