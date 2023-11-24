@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include <local_mapper/LocalMapper.h>
 
 class LocalMapper : public rclcpp::Node
 {
@@ -14,6 +15,8 @@ class LocalMapper : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr color_image_subscriber_;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depth_image_subscriber_;
+
+        t24e::local_mapper::LocalMapper local_mapper_;
 
         void colorImageCallback(const sensor_msgs::msg::Image& msg);
         void depthImageCallback(const sensor_msgs::msg::Image& msg);

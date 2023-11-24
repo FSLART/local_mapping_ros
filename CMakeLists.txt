@@ -5,8 +5,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-include_directories(include)
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -16,6 +14,8 @@ find_package(sensor_msgs REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 find_package(local_mapping_core REQUIRED)
+
+include_directories(include ${local_mapping_core_INCLUDE_DIRS})
 
 add_executable(local_mapping_ros_node src/LocalMapper.cpp)
 ament_target_dependencies(local_mapping_ros_node rclcpp sensor_msgs local_mapping_core)

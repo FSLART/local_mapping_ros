@@ -2,6 +2,9 @@
 
 LocalMapper::LocalMapper() : Node("local_mapper")
 {
+
+    this.local_mapper_ = t24e::local_mapper::LocalMapper();
+
     color_image_subscriber_ = this->create_subscription<sensor_msgs::msg::Image>(
         "color_image", 10, std::bind(&LocalMapper::colorImageCallback, this, std::placeholders::_1));
     depth_image_subscriber_ = this->create_subscription<sensor_msgs::msg::Image>(
