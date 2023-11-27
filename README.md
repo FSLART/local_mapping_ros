@@ -3,11 +3,10 @@
 Local mapper ROS wrapper.
 
 ## Requirements
-- ROS 2
+- ROS 2 Humble
 - CMake
-- TorchScript
+- LibTorch
 - C++17 compiler
-- [local_mapping_core](https://github.com/FSLART/local_mapping_core)
 
 or
 
