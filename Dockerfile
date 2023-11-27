@@ -4,21 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # install dependencies
 RUN apt update
-RUN apt install git build-essential libeigen3-dev libcgal-dev -y
-
-# clone, build and install the core library
-WORKDIR /temp
-RUN git clone -b dev https://github.com/FSLART/local_mapping_core.git
-WORKDIR /temp/local_mapping_core
-# build the library
-RUN mkdir build
-WORKDIR /temp/local_mapping_core/build
-RUN cmake ..
-RUN make -j8
-# install
-RUN make install
-WORKDIR /home/fslart
-RUN rm -rf /temp
+RUN apt install git build-essential libeigen3-dev -y
 
 RUN apt install python3-rosdep python3-colcon-common-extensions -y
 
@@ -37,4 +23,4 @@ RUN rosdep install -i --from-path src --rosdistro humble -y
 # build the workspace
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
  cd /ros2_ws && \
- colcon build"
+ colcon build --parallel-workers 6 --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"
