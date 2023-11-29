@@ -43,6 +43,16 @@ namespace t24e::local_mapper::vision {
         return m;
     }
 
+    Eigen::Matrix3d RGBCamera::getR() {
+        Eigen::Affine3d tf = this->getTfToBase();
+        return tf.rotation();
+    }
+
+    Eigen::Vector3d RGBCamera::getT() {
+        Eigen::Affine3d tf = this->getTfToBase();
+        return tf.translation();
+    }
+
     void RGBCamera::setTfToBase(const Eigen::Affine3d &tf) {
         std::unique_lock lock(this->tfMutex);
         this->tfToBase = tf;

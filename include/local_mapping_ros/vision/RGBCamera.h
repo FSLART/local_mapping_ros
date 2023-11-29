@@ -78,6 +78,12 @@ namespace t24e::local_mapper::vision {
             /*! \brief Get the affine transform as a [R|t] 3x4 matrix */
             Eigen::Matrix<double,3,4> getTfToBaseAsRt();
 
+            /*! \brief Get the extrinsic rotation matrix. */
+            Eigen::Matrix3d getR();
+
+            /*! \brief Get the extrinsic translation vector. */
+            Eigen::Vector3d getT();
+
             /*! \brief Set the transform between the camera's optical axis and the car's axis. */
             void setTfToBase(const Eigen::Affine3d& tf);
 
