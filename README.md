@@ -31,3 +31,4 @@ If you aren't working in this package and just want to use it, or deploying to p
 ### Docker
 
 - Run the command `docker build -t local_mapping .` and wait about some centuries.
+- Run the command `docker run --gpus all local_mapping`.
