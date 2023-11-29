@@ -17,6 +17,6 @@ namespace t24e::local_mapper::vision {
         point_msg.y = point.y();
         point_msg.z = point.z();
 
-        return point;
+        return point_msg;
     }
 } // t24e::local_mapper::vision
