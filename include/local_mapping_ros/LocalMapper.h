@@ -7,6 +7,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include "geometry_msgs/msg/point.hpp"
+#include "sensor_msgs/msg/image.hpp"
 #include <local_mapping_ros/vision/RGBCamera.h>
 #include <local_mapping_ros/vision/RGBDCamera.h>
 #include <local_mapping_ros/vision/ReconstructionFromDepth.h>
@@ -44,6 +45,15 @@ namespace t24e::local_mapper {
 
             /*! \brief Callback called whenever a new depth image is received. */
             void onDepthImage();
+
+            /*! \brief Subscriber to the depth image topic. */
+            rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depthImageSub;
+
+            /*! \brief Subscriber to the color image topic. */
+            rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr colorImageSub;
+
+            /*! \brief Subscriber to the camera info topic. */
+            rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr cameraInfoSub;
 
         public:
             LocalMapper();

@@ -17,6 +17,58 @@ namespace t24e {
             // instantiate and initialize the cone detector
             this->detector = std::make_unique<local_mapper::cnn::DAMO>(path);
             this->detector->init();
+
+            // subscribe to the depth image topic
+            this->depthImageSub = this->create_subscription<sensor_msgs::msg::Image>(
+                    "/camera/depth/image_raw",
+                    10,
+                    [](const sensor_msgs::msg::Image::SharedPtr msg) {
+                        // convert the ROS image to a cv::Mat
+                        cv_bridge::CvImagePtr cv_ptr;
+                        try {
+                            cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+                        } catch (cv_bridge::Exception &e) {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "cv_bridge exception: %s", e.what());
+                            return;
+                        }
+
+                        // add the image to the camera
+                        this->addDepthImage(cv_ptr->image);
+                    });
+
+            // subscribe to the color image topic
+            this->colorImageSub = this->create_subscription<sensor_msgs::msg::Image>(
+                    "/camera/color/image_raw",
+                    10,
+                    [](const sensor_msgs::msg::Image::SharedPtr msg) {
+                        // convert the ROS image to a cv::Mat
+                        cv_bridge::CvImagePtr cv_ptr;
+                        try {
+                            cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+                        } catch (cv_bridge::Exception &e) {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "cv_bridge exception: %s", e.what());
+                            return;
+                        }
+
+                        // add the image to the camera
+                        this->addColorImage(cv_ptr->image);
+                    });
+
+            // subscribe to camerainfo topic
+            this->cameraInfoSub = this->create_subscription<sensor_msgs::msg::CameraInfo>(
+                    "/camera/depth/camera_info",
+                    10,
+                    [](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
+                        // convert the ROS camera info to an Eigen matrix
+                        Eigen::Matrix3d K;
+                        K << msg->k[0], msg->k[1], msg->k[2],
+                                msg->k[3], msg->k[4], msg->k[5],
+                                msg->k[6], msg->k[7], msg->k[8];
+
+                        // set the camera's intrinsic matrix
+                        this->setK(K);
+                    });
+
         }
 
         LocalMapper::~LocalMapper() {
@@ -61,6 +113,12 @@ namespace t24e {
 
             // notify waiting thread that a new map is ready
             this->mapCond.notify_one();
+        }
+
+        void LocalMapper::onColorImage() {
+
+            this->addColorImage(this->camera->getLastColorImage().second);
+
         }
 
         void LocalMapper::addColorImage(const cv::Mat &img) {
