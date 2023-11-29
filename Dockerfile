@@ -20,7 +20,15 @@ WORKDIR /ros2_ws
 # install dependencies
 RUN rosdep install -i --from-path src --rosdistro humble -y
 
+RUN apt install ros-humble-foxglove-bridge -y
+
 # build the workspace
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
  cd /ros2_ws && \
  colcon build --parallel-workers 6 --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"
+
+CMD /bin/bash -c "source /opt/ros/humble/setup.bash && \
+ cd /ros2_ws && \
+ source install/local_setup.bash && \
+ cd src/local_mapping_ros/launch && \
+ ros2 launch mapper.launch"
