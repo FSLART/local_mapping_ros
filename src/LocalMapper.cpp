@@ -69,6 +69,32 @@ namespace t24e {
                         this->setK(K);
                     });
 
+            // initialize the tf buffer and listener
+            this->tfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+            this->tfListener = std::make_shared<tf2_ros::TransformListener>(*this->tfBuffer);
+
+            // create the tf timer to update the tf
+            this->tfTimer = this->create_wall_timer(
+                    std::chrono::milliseconds(100),
+                    [this]() {
+                        // get the transform from the camera to the car's base frame
+                        geometry_msgs::msg::TransformStamped tf;
+                        try {
+                            tf = this->tfBuffer->lookupTransform("base_link", "camera_link", tf2::TimePointZero);
+                        } catch (const tf2::TransformException &ex) {
+                            RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+                            return;
+                        }
+
+                        // convert the transform to an Eigen matrix
+                        Eigen::Affine3d tfEigen;
+                        tfEigen.matrix() << tf.transform.rotation.w, tf.transform.rotation.x, tf.transform.rotation.y, tf.transform.rotation.z,
+                                tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z, 1;
+
+                        // set the camera's transform
+                        this->setCameraTf(tfEigen);
+                    });
+
         }
 
         LocalMapper::~LocalMapper() {

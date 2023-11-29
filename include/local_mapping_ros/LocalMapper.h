@@ -55,6 +55,15 @@ namespace t24e::local_mapper {
             /*! \brief Subscriber to the camera info topic. */
             rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr cameraInfoSub;
 
+            /*! \brief Transform between the camera and the car's base frame. */
+            std::unique_ptr<tf2_ros::Buffer> tfBuffer;
+
+            /*! \brief Transform listener. */
+            std::shared<tf2_ros::TransformListener> tfListener;
+
+            /*! \brief tf timer. */
+            rclcpp::TimerBase::SharedPtr tfTimer;
+
         public:
             LocalMapper();
             ~LocalMapper();
