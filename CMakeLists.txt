@@ -29,7 +29,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
 
-add_executable(local_mapping_ros_node 
+add_executable(local_mapper_node 
   src/local_mapper_node.cpp
   src/LocalMapper.cpp 
   src/cnn/ConeDetector.cpp 
@@ -39,14 +39,14 @@ add_executable(local_mapping_ros_node
   src/vision/RGBDCamera.cpp
   src/vision/Utils.cpp
 )
-ament_target_dependencies(local_mapping_ros_node rclcpp sensor_msgs geometry_msgs OpenCV Torch)
+ament_target_dependencies(local_mapper_node rclcpp sensor_msgs geometry_msgs OpenCV Torch)
 
 message(WARNING "TORCH_LIBRARIES ${TORCH_LIBRARIES}")
 
-target_link_libraries(local_mapping_ros_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${TORCH_LIBRARIES})
+target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${TORCH_LIBRARIES})
 
 install(TARGETS
-  local_mapping_ros_node
+  local_mapper_node
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
