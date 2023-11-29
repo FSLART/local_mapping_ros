@@ -9,11 +9,15 @@ namespace t24e {
         namespace vision {
             geometry_msgs::msg::Point ReconstructionFromDepth::deprojectPixelToPoint(RGBDCamera &cam, Eigen::Vector3d pixel) {
 
-                geometry_msgs::msg::Point point;
+                Eigen::Vector3d point;
 
-                point.x = (pixel.x() - cam.getK()(0,2)) * pixel.z() / cam.getK()(0,0);
-                point.y = (pixel.y() - cam.getK()(1,2)) * pixel.z() / cam.getK()(1,1);
-                point.z = pixel.z();
+                point = (cam.getR().inverse() * cam.getK().inverse() * pixel) - cam.getT();
+
+                geometry_msgs::msg::Point point_msg;
+
+                point_msg.x = point.x();
+                point_msg.y = point.y();
+                point_msg.z = point.z();
 
                 return point;
             }
