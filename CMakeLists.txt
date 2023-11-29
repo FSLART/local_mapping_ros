@@ -39,7 +39,7 @@ add_executable(local_mapper_node
   src/vision/RGBDCamera.cpp
   src/vision/Utils.cpp
 )
-ament_target_dependencies(local_mapper_node rclcpp sensor_msgs geometry_msgs OpenCV Torch)
+ament_target_dependencies(local_mapper_node rclcpp sensor_msgs geometry_msgs tf2 tf2_ros OpenCV Torch)
 
 message(WARNING "TORCH_LIBRARIES ${TORCH_LIBRARIES}")
 
