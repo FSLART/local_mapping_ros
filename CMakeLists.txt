@@ -17,6 +17,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -28,6 +31,12 @@ find_package(Torch REQUIRED PATHS ${TORCH_PATH})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Cone.msg"
+  "msg/ConeArray.msg"
+  DEPENDENCIES geometry_msgs
+)
 
 add_executable(local_mapper_node 
   src/local_mapper_node.cpp
