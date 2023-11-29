@@ -4,23 +4,19 @@
 
 #include <local_mapping_ros/vision/ReconstructionFromDepth.h>
 
-namespace t24e {
-    namespace local_mapper {
-        namespace vision {
-            geometry_msgs::msg::Point ReconstructionFromDepth::deprojectPixelToPoint(RGBDCamera &cam, Eigen::Vector3d pixel) {
+namespace t24e::local_mapper::vision {
+    geometry_msgs::msg::Point ReconstructionFromDepth::deprojectPixelToPoint(RGBDCamera &cam, Eigen::Vector3d pixel) {
 
-                Eigen::Vector3d point;
+        Eigen::Vector3d point;
 
-                point = (cam.getR().inverse() * cam.getK().inverse() * pixel) - cam.getT();
+        point = (cam.getR().inverse() * cam.getK().inverse() * pixel) - cam.getT();
 
-                geometry_msgs::msg::Point point_msg;
+        geometry_msgs::msg::Point point_msg;
 
-                point_msg.x = point.x();
-                point_msg.y = point.y();
-                point_msg.z = point.z();
+        point_msg.x = point.x();
+        point_msg.y = point.y();
+        point_msg.z = point.z();
 
-                return point;
-            }
-        } // t24e
-    } // local_mapper
-} // vision
+        return point;
+    }
+} // t24e::local_mapper::vision
