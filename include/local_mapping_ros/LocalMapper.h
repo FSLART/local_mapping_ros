@@ -8,6 +8,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include "geometry_msgs/msg/point.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/camera_info.hpp"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
+#include <cv_bridge/cv_bridge.h>
 #include <local_mapping_ros/vision/RGBCamera.h>
 #include <local_mapping_ros/vision/RGBDCamera.h>
 #include <local_mapping_ros/vision/ReconstructionFromDepth.h>
@@ -59,7 +63,7 @@ namespace t24e::local_mapper {
             std::unique_ptr<tf2_ros::Buffer> tfBuffer;
 
             /*! \brief Transform listener. */
-            std::shared<tf2_ros::TransformListener> tfListener;
+            std::shared_ptr<tf2_ros::TransformListener> tfListener;
 
             /*! \brief tf timer. */
             rclcpp::TimerBase::SharedPtr tfTimer;
