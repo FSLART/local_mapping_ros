@@ -22,7 +22,7 @@ namespace t24e {
             this->depthImageSub = this->create_subscription<sensor_msgs::msg::Image>(
                     "/camera/depth/image_raw",
                     10,
-                    [](const sensor_msgs::msg::Image::SharedPtr msg) {
+                    [this](const sensor_msgs::msg::Image::SharedPtr msg) {
                         // convert the ROS image to a cv::Mat
                         cv_bridge::CvImagePtr cv_ptr;
                         try {
@@ -40,7 +40,7 @@ namespace t24e {
             this->colorImageSub = this->create_subscription<sensor_msgs::msg::Image>(
                     "/camera/color/image_raw",
                     10,
-                    [](const sensor_msgs::msg::Image::SharedPtr msg) {
+                    [this](const sensor_msgs::msg::Image::SharedPtr msg) {
                         // convert the ROS image to a cv::Mat
                         cv_bridge::CvImagePtr cv_ptr;
                         try {
@@ -58,7 +58,7 @@ namespace t24e {
             this->cameraInfoSub = this->create_subscription<sensor_msgs::msg::CameraInfo>(
                     "/camera/depth/camera_info",
                     10,
-                    [](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
+                    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
                         // convert the ROS camera info to an Eigen matrix
                         Eigen::Matrix3d K;
                         K << msg->k[0], msg->k[1], msg->k[2],
@@ -140,13 +140,7 @@ namespace t24e {
             // notify waiting thread that a new map is ready
             this->mapCond.notify_one();
         }
-
-        void LocalMapper::onColorImage() {
-
-            this->addColorImage(this->camera->getLastColorImage().second);
-
-        }
-
+        
         void LocalMapper::addColorImage(const cv::Mat &img) {
 
             this->camera->captureColorImage(img);
