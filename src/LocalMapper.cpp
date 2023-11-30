@@ -69,6 +69,17 @@ namespace t24e {
                         this->setK(K);
                     });
 
+
+            // initialize the cones publisher
+            this->conesPub = this->create_publisher<lart_msgs::msg::ConeArray>(
+                    "/cones",
+                    10);
+
+            // initialize the markers publisher
+            this->markersPub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+                    "/markers",
+                    10);
+
             // initialize the tf buffer and listener
             this->tfBuffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
             this->tfListener = std::make_shared<tf2_ros::TransformListener>(*this->tfBuffer);
@@ -95,6 +106,45 @@ namespace t24e {
                         this->setCameraTf(tfEigen);
                     });
 
+            this->conesTimer = this->create_wall_timer(
+                std::chrono::milliseconds(50),
+                [this]() {
+
+                    // get the current map
+                    // this is the map consumer, so it will idle waiting for a new map using a condition variable
+                    lart_msgs::msg::ConeArray map = this->getCurrentMap();
+
+                    // initialize the marker array
+                    visualization_msgs::msg::MarkerArray markers;
+                    for(auto c : map.cones) {
+
+                        // get the color
+                        std::vector<std::uint8_t> color = local_mapper::Utils::getColorByLabel((std::int16_t) c.class_type.data);
+
+                        visualization_msgs::msg::Marker marker;
+                        marker.header.frame_id = "base_link";
+                        marker.header.stamp = this->get_clock()->now();
+                        marker.ns = "cones";
+                        marker.type = visualization_msgs::msg::Marker::CYLINDER;
+                        marker.action = visualization_msgs::msg::Marker::ADD;
+                        marker.pose.position = c.position;
+                        marker.scale.x = 0.1;
+                        marker.scale.y = 0.1;
+                        marker.scale.z = 0.2;
+                        marker.color.a = 1.0;
+                        marker.color.r = color[0];
+                        marker.color.g = color[1];
+                        marker.color.b = color[2];
+                        markers.markers.push_back(marker);
+                    }
+                    // publish the markers
+                    this->markersPub->publish(markers);
+                    
+                    // publish the cones
+                    this->conesPub->publish(map);
+                }
+            );
+
         }
 
         LocalMapper::~LocalMapper() {
@@ -109,10 +159,7 @@ namespace t24e {
 
             // this method is basically the map producer
 
-            std::unique_lock lock(this->mapMutex);
-
-            // clear the current map
-            this->currentMap.clear();
+            lart_msgs::msg::ConeArray newMap;
 
             cv::Mat img = this->camera->getLastDepthImage().second;
 
@@ -129,10 +176,18 @@ namespace t24e {
                 // reconstruct the cone to a point
                 geometry_msgs::msg::Point point = local_mapper::vision::ReconstructionFromDepth::deprojectPixelToPoint(*this->camera, pixel);
 
-                // add to the map
-                std::unique_lock lock(this->mapMutex);
-                this->currentMap.push_back(point);
+                // create the cone message
+                lart_msgs::msg::Cone cone;
+                cone.position = point;
+                cone.class_type.data = (std::int16_t) c.label;
+
+                // add the cone to the array
+                newMap.cones.push_back(cone);
             }
+
+            // update the map object
+            std::unique_lock lock(this->mapMutex);
+            this->currentMap = newMap;
 
             this->mapReady = true;
             lock.unlock();
@@ -162,7 +217,7 @@ namespace t24e {
             this->camera->setK(K);
         }
 
-        std::vector<geometry_msgs::msg::Point> LocalMapper::getCurrentMap() {
+        lart_msgs::msg::ConeArray LocalMapper::getCurrentMap() {
             // this method is the map consumer
 
             std::unique_lock lock(this->mapMutex);
@@ -173,7 +228,7 @@ namespace t24e {
             // update the flag
             this->mapReady = false;
 
-            return this->currentMap;
+            return currentMap;
         }
     } // t24e
 } // local_mapper

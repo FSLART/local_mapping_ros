@@ -9,6 +9,8 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "lart_msgs/msg/cone_array.hpp"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 #include <cv_bridge/cv_bridge.h>
@@ -16,6 +18,7 @@
 #include <local_mapping_ros/vision/RGBDCamera.h>
 #include <local_mapping_ros/vision/ReconstructionFromDepth.h>
 #include <local_mapping_ros/cnn/DAMO.h>
+#include <local_mapping_ros/Utils.h>
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -34,7 +37,7 @@ namespace t24e::local_mapper {
             std::unique_ptr<local_mapper::vision::RGBDCamera> camera;
 
             /*! \brief Current map of cones. */
-            std::vector<geometry_msgs::msg::Point> currentMap;
+            lart_msgs::msg::ConeArray currentMap;
 
             /*! \brief Mutex which controls access to the cones map. */
             std::mutex mapMutex;
@@ -59,6 +62,12 @@ namespace t24e::local_mapper {
             /*! \brief Subscriber to the camera info topic. */
             rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr cameraInfoSub;
 
+            /*! \brief Publisher of the cones array. */
+            rclcpp::Publisher<lart_msgs::msg::ConeArray>::SharedPtr conesPub;
+
+            /*! \brief Publisher of the cone markers. */
+            rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markersPub;
+
             /*! \brief Transform between the camera and the car's base frame. */
             std::unique_ptr<tf2_ros::Buffer> tfBuffer;
 
@@ -67,6 +76,9 @@ namespace t24e::local_mapper {
 
             /*! \brief tf timer. */
             rclcpp::TimerBase::SharedPtr tfTimer;
+
+            /*! \brief Cone publishing timer. */
+            rclcpp::TimerBase::SharedPtr conesTimer;
 
         public:
             LocalMapper();
@@ -86,7 +98,7 @@ namespace t24e::local_mapper {
 
             /*! \brief Get the current cones map. Grabs the images from all the cameras, detects cones and
              * does 3D reconstruction. */
-            std::vector<geometry_msgs::msg::Point> getCurrentMap();
+            lart_msgs::msg::ConeArray getCurrentMap();
     };
 
 } // local_mapper
