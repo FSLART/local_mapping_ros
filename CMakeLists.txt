@@ -18,10 +18,11 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(cv_bridge REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(lart_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -34,15 +35,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Cone.msg"
-  "msg/ConeArray.msg"
-  DEPENDENCIES geometry_msgs std_msgs
-)
-
 add_executable(local_mapper_node 
   src/local_mapper_node.cpp
   src/LocalMapper.cpp 
+  src/Utils.cpp
   src/cnn/ConeDetector.cpp 
   src/cnn/DAMO.cpp
   src/vision/ReconstructionFromDepth.cpp
@@ -50,7 +46,7 @@ add_executable(local_mapper_node
   src/vision/RGBDCamera.cpp
   src/vision/Utils.cpp
 )
-ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs tf2 tf2_ros cv_bridge OpenCV Torch)
+ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros cv_bridge OpenCV Torch)
 
 message(WARNING "TORCH_LIBRARIES ${TORCH_LIBRARIES}")
 
