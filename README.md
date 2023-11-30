@@ -6,6 +6,7 @@ Local mapper ROS wrapper.
 - ROS 2 Humble
 - CMake
 - LibTorch
+- [lart_msgs](https://github.com/FSLART/lart_msgs)
 - C++17 compiler
 
 or
