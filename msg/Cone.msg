@@ -1,3 +1,3 @@
-Header header
+std_msgs/Header header
 geometry_msgs/Point position
-int16 class
+std_msgs/Int16 class_type
