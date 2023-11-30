@@ -15,10 +15,12 @@ set(CMAKE_BUILD_TYPE Release)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(cv_bridge REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -35,7 +37,7 @@ include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${TORCH
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Cone.msg"
   "msg/ConeArray.msg"
-  DEPENDENCIES geometry_msgs
+  DEPENDENCIES geometry_msgs std_msgs
 )
 
 add_executable(local_mapper_node 
@@ -48,7 +50,7 @@ add_executable(local_mapper_node
   src/vision/RGBDCamera.cpp
   src/vision/Utils.cpp
 )
-ament_target_dependencies(local_mapper_node rclcpp sensor_msgs geometry_msgs tf2 tf2_ros OpenCV Torch)
+ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs tf2 tf2_ros cv_bridge OpenCV Torch)
 
 message(WARNING "TORCH_LIBRARIES ${TORCH_LIBRARIES}")
 
