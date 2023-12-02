@@ -1,5 +1,11 @@
 <launch>
-    <node name="local_mapper" pkg="local_mapping_ros" exec="local_mapper_node" output="screen" />
+    <node name="local_mapper" pkg="local_mapping_ros" exec="local_mapper_node" output="screen">
+        <param name="model_path" type="string" value="model/damo.pth" />
+        <param name="map_rate" type="double" value="10.0" />
+        <param name="tf_loop_rate" type="double" value="5.0" />
+        <param name="camera_frame_id" type="string" value="camera_link" />
+        <param name="car_frame_id" type="string" value="base_link" />
+    </node>
     <include file="$(find-pkg-share foxglove_bridge)/launch/foxglove_bridge_launch.xml">
         <arg name="port" value="8765"/>
     </include>
