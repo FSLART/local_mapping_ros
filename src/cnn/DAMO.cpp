@@ -51,9 +51,10 @@ namespace t24e::local_mapper::cnn {
 
         // load the torchscript model
         try {
+            std::cout << "Loading the TorchScript module at " << this->modelPath << std::endl;
             this->torchModule = torch::jit::load(this->modelPath);
         } catch(const c10::Error& e) {
-            std::cerr << "Error loading the TorchScript module." << std::endl;
+            std::cerr << "Error loading the TorchScript module: " << e.what() << std::endl;
             throw std::runtime_error("Error loading the TorchScript module!");
         }
 
