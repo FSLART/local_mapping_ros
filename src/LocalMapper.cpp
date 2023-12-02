@@ -4,34 +4,30 @@
 
 #include <local_mapping_ros/LocalMapper.h>
 
-#define CONE_DETECTOR_FILE_PATH "models/DAMO.pth"
-
 namespace t24e {
     namespace local_mapper {
         LocalMapper::LocalMapper() : Node("local_mapper") {
 
             // declare parameters
-            this->declare_parameter("model_path", rclcpp::PARAMETER_STRING);
-            this->declare_parameter("map_rate", rclcpp::PARAMETER_DOUBLE);
-            this->declare_parameter("tf_lookup_rate", rclcpp::PARAMETER_DOUBLE);
-            this->declare_parameter("camera_frame_id", rclcpp::PARAMETER_STRING);
-            this->declare_parameter("car_frame_id", rclcpp::PARAMETER_STRING);
-            this->declare_parameter("rgb_topic", rclcpp::PARAMETER_STRING);
-            this->declare_parameter("depth_topic", rclcpp::PARAMETER_STRING);
-            this->declare_parameter("camera_info_topic", rclcpp::PARAMETER_STRING);
+            this->declare_parameter("model_path", "model/damo.pth");
+            this->declare_parameter("map_rate", 10.0);
+            this->declare_parameter("tf_lookup_rate", 10.0);
+            this->declare_parameter("camera_frame_id", "camera_link");
+            this->declare_parameter("car_frame_id", "base_link");
+            this->declare_parameter("rgb_topic", "/camera/color/image_raw");
+            this->declare_parameter("depth_topic", "/camera/depth/image_rect_raw");
+            this->declare_parameter("camera_info_topic", "/camera/depth/camera_info");
 
             // instantiate the camera
             this->camera = std::make_unique<local_mapper::vision::RGBDCamera>();
 
-            std::string path(CONE_DETECTOR_FILE_PATH);
-
             // instantiate and initialize the cone detector
-            this->detector = std::make_unique<local_mapper::cnn::DAMO>(path);
+            this->detector = std::make_unique<local_mapper::cnn::DAMO>(this->get_parameter("model_path").as_string());
             this->detector->init();
 
             // subscribe to the depth image topic
             this->depthImageSub = this->create_subscription<sensor_msgs::msg::Image>(
-                    "/camera/depth/image_raw",
+                    this->get_parameter("depth_topic").as_string(),
                     10,
                     [this](const sensor_msgs::msg::Image::SharedPtr msg) {
                         // convert the ROS image to a cv::Mat
@@ -49,7 +45,7 @@ namespace t24e {
 
             // subscribe to the color image topic
             this->colorImageSub = this->create_subscription<sensor_msgs::msg::Image>(
-                    "/camera/color/image_raw",
+                    this->get_parameter("rgb_topic").as_string(),
                     10,
                     [this](const sensor_msgs::msg::Image::SharedPtr msg) {
                         // convert the ROS image to a cv::Mat
@@ -67,7 +63,7 @@ namespace t24e {
 
             // subscribe to camerainfo topic
             this->cameraInfoSub = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-                    "/camera/depth/camera_info",
+                    this->get_parameter("camera_info_topic").as_string(),
                     10,
                     [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
                         // convert the ROS camera info to an Eigen matrix
@@ -88,7 +84,7 @@ namespace t24e {
 
             // initialize the markers publisher
             this->markersPub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
-                    "/markers",
+                    "/local_cone_markers",
                     10);
 
             // initialize the tf buffer and listener
@@ -97,13 +93,13 @@ namespace t24e {
 
             // create the tf timer to update the tf
             this->tfTimer = this->create_wall_timer(
-                    std::chrono::milliseconds(100),
+                    this->get_parameter("tf_lookup_rate").as_double(),
                     [this]() {
                         // get the transform from the camera to the car's base frame
                         // this transform is published by the 
                         geometry_msgs::msg::TransformStamped tf;
                         try {
-                            tf = this->tfBuffer->lookupTransform("base_link", "camera_link", tf2::TimePointZero);
+                            tf = this->tfBuffer->lookupTransform(this->get_parameter("car_frame_id"), this->get_parameter("camera_frame_id"), tf2::TimePointZero);
                         } catch (const tf2::TransformException &ex) {
                             RCLCPP_WARN(this->get_logger(), "%s", ex.what());
                             return;
@@ -119,7 +115,7 @@ namespace t24e {
                     });
 
             this->conesTimer = this->create_wall_timer(
-                std::chrono::milliseconds(50),
+                this->get_parameter("map_rate").as_double(),
                 [this]() {
 
                     // get the current map
@@ -134,7 +130,7 @@ namespace t24e {
                         std::vector<std::uint8_t> color = local_mapper::Utils::getColorByLabel((std::int16_t) c.class_type.data);
 
                         visualization_msgs::msg::Marker marker;
-                        marker.header.frame_id = "base_link";
+                        marker.header.frame_id = this->get_parameter("car_frame_id").as_string();
                         marker.header.stamp = this->get_clock()->now();
                         marker.ns = "cones";
                         marker.type = visualization_msgs::msg::Marker::CYLINDER;
