@@ -9,6 +9,17 @@
 namespace t24e {
     namespace local_mapper {
         LocalMapper::LocalMapper() : Node("local_mapper") {
+
+            // declare parameters
+            this->declare_parameter("model_path", rclcpp::PARAMETER_STRING);
+            this->declare_parameter("map_rate", rclcpp::PARAMETER_DOUBLE);
+            this->declare_parameter("tf_lookup_rate", rclcpp::PARAMETER_DOUBLE);
+            this->declare_parameter("camera_frame_id", rclcpp::PARAMETER_STRING);
+            this->declare_parameter("car_frame_id", rclcpp::PARAMETER_STRING);
+            this->declare_parameter("rgb_topic", rclcpp::PARAMETER_STRING);
+            this->declare_parameter("depth_topic", rclcpp::PARAMETER_STRING);
+            this->declare_parameter("camera_info_topic", rclcpp::PARAMETER_STRING);
+
             // instantiate the camera
             this->camera = std::make_unique<local_mapper::vision::RGBDCamera>();
 
@@ -89,6 +100,7 @@ namespace t24e {
                     std::chrono::milliseconds(100),
                     [this]() {
                         // get the transform from the camera to the car's base frame
+                        // this transform is published by the 
                         geometry_msgs::msg::TransformStamped tf;
                         try {
                             tf = this->tfBuffer->lookupTransform("base_link", "camera_link", tf2::TimePointZero);
