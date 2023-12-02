@@ -52,6 +52,11 @@ message(WARNING "TORCH_LIBRARIES ${TORCH_LIBRARIES}")
 
 target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${TORCH_LIBRARIES})
 
+# Install launch files
+install(DIRECTORY 
+  launch
+  DESTINATION share/${PROJECT_NAME})
+
 install(TARGETS
   local_mapper_node
   DESTINATION lib/${PROJECT_NAME})
