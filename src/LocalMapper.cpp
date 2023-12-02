@@ -21,8 +21,9 @@ namespace t24e {
             // instantiate the camera
             this->camera = std::make_unique<local_mapper::vision::RGBDCamera>();
 
+            std::string modelPath(this->get_parameter("model_path").as_string());
             // instantiate and initialize the cone detector
-            this->detector = std::make_unique<local_mapper::cnn::DAMO>(this->get_parameter("model_path").as_string());
+            this->detector = std::make_unique<local_mapper::cnn::DAMO>(modelPath);
             this->detector->init();
 
             // subscribe to the depth image topic
@@ -93,13 +94,13 @@ namespace t24e {
 
             // create the tf timer to update the tf
             this->tfTimer = this->create_wall_timer(
-                    this->get_parameter("tf_lookup_rate").as_double(),
+                    std::chrono::milliseconds((int) ((double) 1 / this->get_parameter("tf_lookup_rate").as_double()) * 1000),
                     [this]() {
                         // get the transform from the camera to the car's base frame
                         // this transform is published by the 
                         geometry_msgs::msg::TransformStamped tf;
                         try {
-                            tf = this->tfBuffer->lookupTransform(this->get_parameter("car_frame_id"), this->get_parameter("camera_frame_id"), tf2::TimePointZero);
+                            tf = this->tfBuffer->lookupTransform(this->get_parameter("car_frame_id").as_string(), this->get_parameter("camera_frame_id").as_string(), tf2::TimePointZero);
                         } catch (const tf2::TransformException &ex) {
                             RCLCPP_WARN(this->get_logger(), "%s", ex.what());
                             return;
@@ -115,7 +116,7 @@ namespace t24e {
                     });
 
             this->conesTimer = this->create_wall_timer(
-                this->get_parameter("map_rate").as_double(),
+                std::chrono::milliseconds((int) ((double) 1 / this->get_parameter("map_rate").as_double()) * 1000),
                 [this]() {
 
                     // get the current map
