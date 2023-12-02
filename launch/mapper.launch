@@ -5,6 +5,9 @@
         <param name="tf_loop_rate" type="double" value="5.0" />
         <param name="camera_frame_id" type="string" value="camera_link" />
         <param name="car_frame_id" type="string" value="base_link" />
+        <param name="rgb_topic" type="string" value="/camera/color/image_raw" />
+        <param name="depth_topic" type="string" value="/camera/depth/image_rect_raw" />
+        <oaran name="camera_info_topic" type="string" value="/camera/depth/camera_info" />
     </node>
     <include file="$(find-pkg-share foxglove_bridge)/launch/foxglove_bridge_launch.xml">
         <arg name="port" value="8765"/>
