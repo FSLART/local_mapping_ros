@@ -57,6 +57,11 @@ install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME})
 
+# install the model
+install(DIRECTORY 
+  model
+  DESTINATION share/${PROJECT_NAME})
+
 install(TARGETS
   local_mapper_node
   DESTINATION lib/${PROJECT_NAME})
