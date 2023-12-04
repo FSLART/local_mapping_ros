@@ -1,6 +1,19 @@
 # local_mapping_ros
 
-Local mapper ROS wrapper.
+Local mapper package. The role of the local mapper is to take the RGB-D camera images and output the cone classes and positions in 3D space.
+
+Configurations such as tf names or topics can be updated in the launch file of this package.
+
+## Inputs
+
+-  `/camera/color/image_raw` (`sensor_msgs/Image`): Color image
+- `/camera/depth/image_rect_raw` (`sensor_msgs/Image`): Depth image
+- `/camera/depth/camera_info` (`sensor_msgs/CameraInfo`): Depth camera intrinsic parameters
+
+## Outputs
+
+- `/cones` (`sensor_msgs/ConeArray`): Cone array in car axis
+- `/local_cone_markers` (`visualization_msgs/MarkerArray`): Array of markers for visualization in RViz or Foxglove
 
 ## Requirements
 - ROS 2 Humble
