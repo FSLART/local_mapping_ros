@@ -10,7 +10,7 @@ set(TORCH_PATH /usr/local/lib/libtorch)
 set(CMAKE_CUDA_ARCHITECTURES 75)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -21,6 +21,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(lart_msgs REQUIRED)
 # uncomment the following section in order to fill in
@@ -46,9 +47,7 @@ add_executable(local_mapper_node
   src/vision/RGBDCamera.cpp
   src/vision/Utils.cpp
 )
-ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros cv_bridge OpenCV Torch)
-
-message(WARNING "TORCH_LIBRARIES ${TORCH_LIBRARIES}")
+ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV Torch)
 
 target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${TORCH_LIBRARIES})
 
