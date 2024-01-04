@@ -16,7 +16,9 @@ namespace t24e::local_mapper::cnn {
     std::vector<bounding_box_t> DAMO::detectCones(const cv::Mat& img) {
 
         // convert the opencv image to a tensor
-        at::Tensor tensorImage = torch::from_blob(img.data, {1, 3, img.rows, img.cols}, at::kByte);
+        at::Tensor tensorImage = torch::from_blob(img.data, {1, 3, img.rows, img.cols}, at::kFloat);
+        // move the tensor to the GPU
+        tensorImage = tensorImage.to(at::kCUDA);
 
         // convert to a vector
         std::vector<torch::jit::IValue> input;
@@ -57,6 +59,8 @@ namespace t24e::local_mapper::cnn {
             std::cerr << "Error loading the TorchScript module: " << e.what() << std::endl;
             throw std::runtime_error("Error loading the TorchScript module!");
         }
+
+        std::cout << "TorchScript module loaded successfully!" << std::endl;
 
         this->initDone = true;
     }
