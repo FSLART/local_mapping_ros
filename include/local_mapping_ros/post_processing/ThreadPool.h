@@ -53,7 +53,11 @@ namespace t24e::local_mapper {
             /*! \brief Schedule a job to the pool queue. */
             void queueJob(std::function<void(size_t threadIdx)> job);
 
+            /*! \brief Notify all workers to stop its job asap. */
             void killAll();
+
+            /*! \brief Is the thread busy at the moment? */
+            bool isBusy();
 
             size_t getNumWorkers() const;
 

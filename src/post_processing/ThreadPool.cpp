@@ -98,6 +98,19 @@ namespace t24e::local_mapper {
         this->workers.clear();
     }
 
+    bool ThreadPool::isBusy() {
+
+        bool isBusy;
+        {
+            // acquire the mutex
+            std::unique_lock<std::mutex> lk(this->queueMutex);
+
+            // the thread is not busy if the 
+            isBusy = !this->jobQueue.empty();
+        }
+        return isBusy;
+    }
+
     size_t ThreadPool::getNumWorkers() const {
         return this->numWorkers;
     }
