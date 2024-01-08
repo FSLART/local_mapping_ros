@@ -6,6 +6,7 @@
 #define LOCAL_MAPPING_CORE_DAMO_H
 
 #include <local_mapping_ros/cnn/ConeDetector.h>
+#include <torch/torch.h>
 #include <torch/script.h>
 
 namespace t24e::local_mapper::cnn {
@@ -16,18 +17,29 @@ namespace t24e::local_mapper::cnn {
             /*! \brief The TorchScript model. */
             torch::jit::script::Module torchModule;
 
+            /*! \brief Device to use (CPU or GPU). Defined in the CMakeLists.txt file. */
+            #ifdef WITH_CUDA
+                torch::Device device = torch::Device(torch::kCUDA);
+            #else
+                torch::Device device = torch::Device(torch::kCPU);
+            #endif
+
+            torch::DeviceType deviceType;
+
             /*! \brief The TorchScript model path to load. */
             std::string modelPath;
 
             /*! \brief Was the model path set? */
             bool modelPathSet = false;
 
+            void validateDevice();
+
         public:
             DAMO(std::string& modelPath);
 
             void init() override;
 
-            std::vector<bounding_box_t> detectCones(const cv::Mat& img) override;
+            std::vector<bounding_box_t> detectCones(cv::Mat img) override;
 
             /*! \brief TorchScript model path getter. */
             std::string getModelPath() const;
