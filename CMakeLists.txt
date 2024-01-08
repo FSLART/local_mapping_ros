@@ -50,6 +50,7 @@ add_executable(local_mapper_node
   src/vision/RGBCamera.cpp
   src/vision/RGBDCamera.cpp
   src/vision/Utils.cpp
+  src/post_processing/ThreadPool.cpp
 )
 ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV Torch)
 
