@@ -105,7 +105,7 @@ namespace t24e::local_mapper {
             // acquire the mutex
             std::unique_lock<std::mutex> lk(this->queueMutex);
 
-            // the thread is not busy if the 
+            // the thread is not busy if the pool has jobs enqueued
             isBusy = !this->jobQueue.empty();
         }
         return isBusy;
