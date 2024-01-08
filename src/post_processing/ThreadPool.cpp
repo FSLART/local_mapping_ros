@@ -10,6 +10,8 @@ namespace t24e::local_mapper {
 
         this->numWorkers = numWorkers;
 
+        this->currThreadIdx = 0;
+
     }
 
     void ThreadPool::start() {
@@ -31,7 +33,9 @@ namespace t24e::local_mapper {
         // run indifenitely
         while(true) {
             
-            std::function<void()> job;
+            std::function<void(size_t threadIdx)> job;
+            size_t threadIdx;
+
             {
                 // acquire the mutex
                 std::unique_lock<std::mutex> lk(this->queueMutex);
@@ -42,19 +46,23 @@ namespace t24e::local_mapper {
                 });
                 if(this->shouldStop)
                     return;
+
+                // increment the thread index
+                threadIdx = this->currThreadIdx++;
                 
                 // select the next job to be done
                 job = this->jobQueue.front();
                 // remove the job from the queue
                 this->jobQueue.pop();
             }
-            // start the job
-            job();
+
+            // start the job, receiving its thread index
+            job(threadIdx);
         }
 
     }
 
-    void ThreadPool::queueJob(std::function<void(void)> job) {
+    void ThreadPool::queueJob(std::function<void(size_t threadIdx)> job) {
 
         {
             // acquire the job queue mutex

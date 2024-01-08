@@ -25,7 +25,7 @@ namespace t24e::local_mapper {
             std::vector<std::thread> workers;
 
             /*! \brief Queue of pending work. */
-            std::queue<std::function<void(void)>> jobQueue;
+            std::queue<std::function<void(size_t threadIdx)>> jobQueue;
 
             /*! \brief Queue condition variable. Controls scheduling. */
             std::condition_variable queueConditionVariable;
@@ -35,6 +35,9 @@ namespace t24e::local_mapper {
 
             /*! \brief Should the pool stop? */
             bool shouldStop = false;
+
+            /*! \brief Incremental index of the current thread. To be used by the programmer has he wishes. */
+            size_t currThreadIdx = 0;
 
             /*! \brief Loop run by each thread in the pool waiting for work. */
             void threadLoop();
@@ -48,7 +51,7 @@ namespace t24e::local_mapper {
             void start();
 
             /*! \brief Schedule a job to the pool queue. */
-            void queueJob(std::function<void(void)> job);
+            void queueJob(std::function<void(size_t threadIdx)> job);
 
             void killAll();
 
