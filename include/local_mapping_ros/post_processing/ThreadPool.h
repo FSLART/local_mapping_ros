@@ -44,6 +44,9 @@ namespace t24e::local_mapper {
             /*! \brief Initialize a pool with a number of threads. */
             ThreadPool(size_t numWorkers);
 
+            /*! \brief Start the thread pool. */
+            void start();
+
             /*! \brief Schedule a job to the pool queue. */
             void queueJob(std::function<void(void)> job);
 

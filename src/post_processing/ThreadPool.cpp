@@ -8,17 +8,22 @@ namespace t24e::local_mapper {
 
     ThreadPool::ThreadPool(size_t numWorkers=0) {
 
+        this->numWorkers = numWorkers;
+
+    }
+
+    void ThreadPool::start() {
+
+        this->shouldStop = false;
+
         // if no number was specified, use the number of threads of the CPU
-        if(numWorkers <= 0)
+        if(this->numWorkers <= 0)
             this->numWorkers = std::thread::hardware_concurrency();
-        else
-            this->numWorkers = numWorkers;
 
         // put all workers on the loop
         for(size_t i = 0; i < this->numWorkers; i++) {
             this->workers.emplace_back(std::thread(&ThreadPool::threadLoop, this));
         }
-
     }
 
     void ThreadPool::threadLoop() {
