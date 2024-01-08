@@ -33,6 +33,12 @@ namespace t24e::local_mapper {
             /*! \brief Queue mutex. Prevents race conditions on the queue. */
             std::mutex queueMutex;
 
+            /*! \brief Should the pool stop? */
+            bool shouldStop = false;
+
+            /*! \brief Loop run by each thread in the pool waiting for work. */
+            void threadLoop();
+
 
         public:
             /*! \brief Initialize a pool with a number of threads. */
@@ -40,6 +46,10 @@ namespace t24e::local_mapper {
 
             /*! \brief Schedule a job to the pool queue. */
             void queueJob(std::function<void(void)> job);
+
+            void killAll();
+
+            size_t getNumWorkers() const;
 
     };
 }
