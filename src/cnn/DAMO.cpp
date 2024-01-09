@@ -3,7 +3,6 @@
 //
 
 #include "local_mapping_ros/cnn/DAMO.h"
-#include <local_mapping_ros/vision/Utils.h>
 
 namespace t24e::local_mapper::cnn {
 
@@ -68,13 +67,95 @@ namespace t24e::local_mapper::cnn {
             [1]: [1, 8400, 4] -> box origin and dimensions
         */
 
+        // convert the class probabilities to tensor
+        torch::Tensor classProbs = outputs->elements()[0].toTensor();
+
+        // convert the bounding boxes to tensor
+        torch::Tensor bboxes = outputs->elements()[0].toTensor();
+
+        // final vector of bounding boxes
+        std::vector<bounding_box_t> bounding_boxes;
+
+        #ifdef WITH_CUDA
+        
+        // TODO: FILTERING USING CUDA (GPU)
+        throw std::runtime_error("CUDA filtering not implemented!");
+
+        #else
+
+        // FILTERING USING A THREAD POOL (CPU)
+
+        // define a mutex to access the valid samples set
+        std::mutex mut;
+
+        // define a job to calculate the entropy and find the maxima
+        auto job = [classProbs, bboxes, &mut, &bounding_boxes](size_t threadIdx) {
+
+            float max = -1.0f;
+            ssize_t maxIndex = -1;
+
+            float entropy = 0;
+
+            // for each class of the sample
+            for(ssize_t classIdx = 0; classIdx < classProbs.sizes()[2]; classIdx++) {
+
+                float p = classProbs[0][threadIdx][classIdx].item().toFloat();
+
+                // check if this probability is the max of the sample
+                if(p > max) {
+                    max = p;
+                    maxIndex = classIdx;
+                }
+
+                // construct the entropy
+                entropy += p * logf(p);
+            }
+
+            entropy = -entropy;
+
+            // if the entropy value is elegible as a valid detection
+            if(entropy <= MAX_ENTROPY_THRESHOLD) {
+
+                // create the bounding box, extracting information from the tensors
+                bounding_box_t box;
+                box.box.first.first = bboxes[0][threadIdx][0].item().toInt();
+                box.box.first.second = bboxes[0][threadIdx][1].item().toInt();
+
+                box.box.second.first = bboxes[0][threadIdx][2].item().toInt();
+                box.box.second.second = bboxes[0][threadIdx][3].item().toInt();
+
+                box.label = maxIndex;
+
+                // acquire the valid samples set mutex
+                std::unique_lock<std::mutex> lk(mut);
+
+                // add the new bounding box
+                bounding_boxes.push_back(box);
+            }
+        };
+
+        // create a thread pool
+        ThreadPool pool = ThreadPool(std::thread::hardware_concurrency());
+
+        // for each sample, start a job
+        for(ssize_t i = 0; i < classProbs.sizes()[1]; i++) {
+            
+            // enqueue the job
+            pool.queueJob(job);
+        }
+
+        // start the pool
+        pool.start();
+
+        // TODO: wait for the pool to finish
+
+        #endif
+
         for(size_t i = 0; i < outputs->elements().size(); i++) {
             torch::Tensor elem = outputs->elements()[i].toTensor();
 
             std::cout << "Elem " << i << ": " << elem.sizes() << std::endl;
         }
-
-        std::vector<bounding_box_t> bounding_boxes;
 
         /*
         at::Tensor outputs = inference.toTensor();

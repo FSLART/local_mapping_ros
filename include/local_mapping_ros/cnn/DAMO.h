@@ -6,8 +6,16 @@
 #define LOCAL_MAPPING_CORE_DAMO_H
 
 #include <local_mapping_ros/cnn/ConeDetector.h>
+#include <local_mapping_ros/vision/Utils.h>
+#include <local_mapping_ros/post_processing/ThreadPool.h>
 #include <torch/torch.h>
 #include <torch/script.h>
+#include <thread>
+#include <set>
+#include <mutex>
+#include <cmath>
+
+#define MAX_ENTROPY_THRESHOLD 0.3
 
 namespace t24e::local_mapper::cnn {
 
