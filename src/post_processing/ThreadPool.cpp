@@ -14,6 +14,11 @@ namespace t24e::local_mapper {
 
     }
 
+    ThreadPool::~ThreadPool() {
+        // kill all before finishing
+        this->killAll();
+    }
+
     void ThreadPool::start() {
 
         this->shouldStop = false;
@@ -26,6 +31,9 @@ namespace t24e::local_mapper {
         for(size_t i = 0; i < this->numWorkers; i++) {
             this->workers.emplace_back(std::thread(&ThreadPool::threadLoop, this));
         }
+
+        // notify all workers to start
+        this->queueConditionVariable.notify_all();
     }
 
     void ThreadPool::threadLoop() {
@@ -61,15 +69,18 @@ namespace t24e::local_mapper {
 
                     // increment completed jobs count
                     this->numCompletedJobs++;
-                }
 
-                // if all the jobs were complete, notify the completion condition variable
-                if(this->numCompletedJobs == this->numEnqueuedJobs)
-                    this->completionConditionVariable.notify_all();
+                    // if all the jobs were complete, notify the completion condition variable
+                    if(this->numCompletedJobs == this->numEnqueuedJobs)
+                        this->completionConditionVariable.notify_all();
+                }
             }
 
             // start the job, receiving its thread index
             job(threadIdx);
+
+            // notify the next free worker
+            this->queueConditionVariable.notify_one();
         }
 
     }

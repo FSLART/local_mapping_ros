@@ -11,6 +11,7 @@
 #include <functional>
 #include <condition_variable>
 #include <mutex>
+#include <iostream>
 
 namespace t24e::local_mapper {
 
@@ -57,6 +58,8 @@ namespace t24e::local_mapper {
         public:
             /*! \brief Initialize a pool with a number of threads. */
             ThreadPool(size_t numWorkers);
+
+            ~ThreadPool();
 
             /*! \brief Start the thread pool. */
             void start();
