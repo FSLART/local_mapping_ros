@@ -54,6 +54,18 @@ namespace t24e::local_mapper {
                 job = this->jobQueue.front();
                 // remove the job from the queue
                 this->jobQueue.pop();
+
+                {
+                    // acquire the completion mutex
+                    std::unique_lock<std::mutex> lk(this->completionMutex);
+
+                    // increment completed jobs count
+                    this->numCompletedJobs++;
+                }
+
+                // if all the jobs were complete, notify the completion condition variable
+                if(this->numCompletedJobs == this->numEnqueuedJobs)
+                    this->completionConditionVariable.notify_all();
             }
 
             // start the job, receiving its thread index
@@ -70,6 +82,14 @@ namespace t24e::local_mapper {
 
             // add the job to the queue
             this->jobQueue.push(job);
+
+            {
+                // acquire the completion mutex
+                std::unique_lock<std::mutex> lk(this->completionMutex);
+
+                // increment the enqueued jobs count
+                this->numEnqueuedJobs++;
+            }
         }
 
         // notify the next free worker
@@ -109,6 +129,17 @@ namespace t24e::local_mapper {
             isBusy = !this->jobQueue.empty();
         }
         return isBusy;
+    }
+
+    void ThreadPool::join() {
+
+        // acquire the completion mutex
+        std::unique_lock<std::mutex> lk(this->completionMutex);
+
+        // wait for the completion condition variable
+        this->completionConditionVariable.wait(lk, [this]{
+            return this->numCompletedJobs == this->numEnqueuedJobs;
+        });
     }
 
     size_t ThreadPool::getNumWorkers() const {

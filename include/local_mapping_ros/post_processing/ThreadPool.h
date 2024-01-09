@@ -39,6 +39,17 @@ namespace t24e::local_mapper {
             /*! \brief Incremental index of the current thread. To be used by the programmer has he wishes. */
             size_t currThreadIdx = 0;
 
+            /*! \brief Total count of enqueued jobs. */
+            size_t numEnqueuedJobs = 0;
+
+            /*! \brief Total count of finished jobs. */
+            size_t numCompletedJobs = 0;
+
+            std::mutex completionMutex;
+
+            /*! \brief Completion condition variable. Notified every time a job finishes. */
+            std::condition_variable completionConditionVariable;
+
             /*! \brief Loop run by each thread in the pool waiting for work. */
             void threadLoop();
 
@@ -58,6 +69,9 @@ namespace t24e::local_mapper {
 
             /*! \brief Is the thread busy at the moment? */
             bool isBusy();
+
+            /*! \brief Wait for the pool to finish the currently enqueued work. */
+            void join();
 
             size_t getNumWorkers() const;
 
