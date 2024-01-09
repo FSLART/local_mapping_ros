@@ -153,6 +153,15 @@ namespace t24e::local_mapper {
         });
     }
 
+    void ThreadPool::resetThreadIdx() {
+
+        // acquire the queue mutex
+        std::unique_lock<std::mutex> lk(this->queueMutex);
+
+        // reset the index
+        this->currThreadIdx = 0;
+    }
+
     size_t ThreadPool::getNumWorkers() const {
         return this->numWorkers;
     }

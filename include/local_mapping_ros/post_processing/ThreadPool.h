@@ -76,6 +76,9 @@ namespace t24e::local_mapper {
             /*! \brief Wait for the pool to finish the currently enqueued work. */
             void join();
 
+            /*! \brief Reset the thread index to 0. Use with caution. May lead to unexpected behaviour. */
+            void resetThreadIdx();
+
             size_t getNumWorkers() const;
 
     };
