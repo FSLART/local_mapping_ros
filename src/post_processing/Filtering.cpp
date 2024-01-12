@@ -16,4 +16,18 @@ namespace t24e::local_mapper::post_processing {
         return -entropy;
     }
 
+    torch::Tensor filterByEntropy(torch::Tensor& predictions, float threshold) {
+        size_t numRows = 0;
+
+        // filter the predictions based on the entropy of the prediction
+        torch::Tensor filteredPredictions = torch::zeros_like(predictions);
+        for(int i = 0; i < predictions.size(0); i++) {
+            torch::Tensor row = predictions[i];
+            float entropy = entropyRow(row);
+            if(entropy < threshold) {
+                filteredPredictions[numRows++] = row;
+            }
+        }
+        return filteredPredictions;
+    }
 };
