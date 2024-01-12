@@ -34,7 +34,7 @@ namespace t24e::local_mapper::post_processing {
                 \param IoUThreshold The intersection over union threshold.
                 \param boundingBoxes The bounding boxes Torch tensor.
             */
-            static nmsIoUResult_t nmsIoU(torch::Tensor& predictions, float scoreThreshold, float IoUThreshold,
+            static std::vector<cnn::bounding_box_t> nmsIoU(torch::Tensor& predictions, float scoreThreshold, float IoUThreshold,
             torch::Tensor& boundingBoxes);
     };
 
