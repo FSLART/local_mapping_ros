@@ -1,5 +1,5 @@
 //
-// Created by carlostojal on 12-01-2025.
+// Created by carlostojal on 12-01-2024.
 //
 
 #ifndef LOCAL_MAPPING_CORE_FILTERING_H
