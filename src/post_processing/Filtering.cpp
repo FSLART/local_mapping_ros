@@ -6,7 +6,7 @@
 
 namespace t24e::local_mapper::post_processing {
 
-    Filtering::entropyRow(torch::Tensor& row) {
+    float Filtering::entropyRow(torch::Tensor& row) {
         // calculate the entropy of the row
         float entropy = 0;
         for(int i = 0; i < row.size(0); i++) {
