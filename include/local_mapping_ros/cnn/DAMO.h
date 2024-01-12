@@ -40,6 +40,9 @@ namespace t24e::local_mapper::cnn {
             /*! \brief Was the model path set? */
             bool modelPathSet = false;
 
+            std::unique_ptr<ThreadPool> threadPool;
+
+            /*! \brief Validate that the selected device is available. */
             void validateDevice();
 
         public:
