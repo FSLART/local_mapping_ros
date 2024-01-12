@@ -77,6 +77,11 @@ namespace t24e::local_mapper::cnn {
         // convert to float and normalize
         tensorImage = tensorImage.to(at::kFloat) / 255.0f;
 
+        // normalize to zero mean and unit standard deviation
+        float mean = tensorImage.mean().item().toFloat(); // obtain the mean
+        float std = tensorImage.std().item().toFloat(); // obtain the standard deviation
+        tensorImage = (tensorImage - mean) / std; // normalize
+
         // std::cout << resizedImg << std::endl;
 
         // check the device is available
@@ -92,8 +97,6 @@ namespace t24e::local_mapper::cnn {
 
         // disable gradient tracking
         torch::NoGradGuard no_grad;
-
-        at::Tensor randomTensor = torch::rand({1, 3, DETECTOR_WIDTH, DETECTOR_HEIGHT});
 
         // execute the model
         auto inference = this->torchModule.forward({tensorImage});
