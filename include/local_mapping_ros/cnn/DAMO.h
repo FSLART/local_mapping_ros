@@ -8,6 +8,7 @@
 #include <local_mapping_ros/cnn/ConeDetector.h>
 #include <local_mapping_ros/vision/Utils.h>
 #include <local_mapping_ros/post_processing/ThreadPool.h>
+#include <local_mapping_ros/post_processing/Filtering.h>
 #include <torch/torch.h>
 #include <torch/script.h>
 #include <thread>
@@ -16,6 +17,8 @@
 #include <cmath>
 
 #define MAX_ENTROPY_THRESHOLD 0.3
+#define MIN_SCORE_THRESHOLD 0.5
+#define IOU_THRESHOLD 0.5
 
 namespace t24e::local_mapper::cnn {
 

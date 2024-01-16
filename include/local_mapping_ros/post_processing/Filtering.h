@@ -49,7 +49,7 @@ namespace t24e::local_mapper::post_processing {
                 \param boundingBoxes The bounding boxes Torch tensor.
             */
             static std::vector<cnn::bounding_box_t> nmsIoU(torch::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
-            torch::Tensor& boundingBoxes, bool useEntropy = false);
+            torch::Tensor& boundingBoxes);
     };
 
 };

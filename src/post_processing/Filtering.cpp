@@ -95,17 +95,16 @@ namespace t24e::local_mapper::post_processing {
     }
 
     std::vector<cnn::bounding_box_t> Filtering::nmsIoU(torch::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
-    torch::Tensor& boundingBoxes, bool useEntropy) {
+    torch::Tensor& boundingBoxes) {
 
         std::vector<cnn::bounding_box_t> boundingBoxes;
 
         // filter the predictions based on the entropy of the prediction
         std::pair<torch::Tensor,size_t> filtered;
         torch::Tensor filteredPredictions = predictions;
-        if(useEntropy) {
-            filtered = filter(predictions, entThreshold, scoreThreshold);
-            filteredPredictions = filtered.first;
-        }
+
+        filtered = filter(predictions, entThreshold, scoreThreshold);
+        filteredPredictions = filtered.first;
 
         // convert the tensor to a vector of bounding boxes
         for(int i = 0; i < filteredPredictions.size(0); i++) {
