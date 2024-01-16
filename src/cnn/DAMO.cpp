@@ -121,10 +121,12 @@ namespace t24e::local_mapper::cnn {
         std::vector<bounding_box_t> bounding_boxes;
 
         #ifdef WITH_CUDA
-        
-        // TODO: FILTERING USING CUDA (GPU)
-        throw std::runtime_error("CUDA filtering not implemented!");
 
+        // TODO: FILTERING USING CUDA (GPU)
+
+        bounding_boxes = Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD, 
+                        IOU_THRESHOLD, bboxes, true);
+    
         #else
 
         // FILTERING USING A THREAD POOL (CPU)
