@@ -90,11 +90,65 @@ namespace t24e::local_mapper::post_processing {
         return iou;
     }
 
-    std::vector<cnn::bounding_box_t> Filtering::nmsIoU(torch::Tensor& predictions, float scoreThreshold, float IoUThreshold,
+    std::vector<cnn::bounding_box_t> Filtering::nmsIoU(torch::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
     torch::Tensor& boundingBoxes, bool useEntropy) {
 
-        // TODO: perform non-maximum supression
         std::vector<cnn::bounding_box_t> boundingBoxes;
+
+        // filter the predictions based on the entropy of the prediction
+        std::pair<torch::Tensor,size_t> filtered;
+        torch::Tensor filteredPredictions = predictions;
+        if(useEntropy) {
+            filtered = filter(predictions, entThreshold, scoreThreshold);
+            filteredPredictions = filtered.first;
+        }
+
+        // convert the tensor to a vector of bounding boxes
+        for(int i = 0; i < filteredPredictions.size(0); i++) {
+            torch::Tensor row = filteredPredictions[i];
+            float score = row[0].item<float>();
+            if(score > scoreThreshold) {
+                // get the bounding box
+                cnn::bounding_box_t box;
+                box.score = score;
+                box.box.first.first = boundingBoxes[i][1].item<int>();
+                box.box.first.second = boundingBoxes[i][2].item<int>();
+                box.box.second.first = boundingBoxes[i][3].item<int>();
+                box.box.second.second = boundingBoxes[i][4].item<int>();
+                boundingBoxes.push_back(box);
+            }
+        }
+
+        // sort the bounding boxes by score
+        std::sort(boundingBoxes.begin(), boundingBoxes.end(), [](cnn::bounding_box_t& box1, cnn::bounding_box_t& box2) {
+            return box1.score > box2.score;
+        });
+
+        ThreadPool pool(std::thread::hardware_concurrency());
+
+        // perform non-maximum supression in a thread pool
+        for(int i = 0; i < boundingBoxes.size(); i++) {
+            for(int j = i + 1; j < boundingBoxes.size(); j++) {
+
+                auto job = [&boundingBoxes, &i, &j, &IoUThreshold](size_t threadIdx){
+
+                    float iou = calculateIoU(boundingBoxes[i], boundingBoxes[j]);
+                    if(iou > IoUThreshold) {
+                        boundingBoxes.erase(boundingBoxes.begin() + j);
+                        j--;
+                    }
+                };
+
+                // at each iteration, add a job to the pool
+                pool.addJob(job);
+            }
+        }
+
+        // start the pool
+        pool.start();
+
+        // wait for completion
+        pool.join();
         
         return boundingBoxes;
     }
