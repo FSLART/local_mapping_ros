@@ -8,6 +8,7 @@
 #include <local_mapping_ros/cnn/types.h>
 #include <local_mapping_ros/post_processing/ThreadPool.h>
 #include <vector>
+#include <mutex>
 #include <algorithm>
 #include <torch/torch.h>
 

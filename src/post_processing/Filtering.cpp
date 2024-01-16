@@ -38,10 +38,13 @@ namespace t24e::local_mapper::post_processing {
         // create the thread pool
         ThreadPool pool(std::thread::hardware_concurrency());
 
+        // mutex to protect concurrent access to the filtered predictions tensor
+        std::mutex mut;
+
         // iterate predictions and add jobs to the pool
         for(int i = 0; i < predictions.size(0); i++) {
 
-            auto job = [&predictions, &filteredPredictions, &numRows, entThreshold, scoreThreshold](size_t threadIdx){
+            auto job = [&predictions, &filteredPredictions, &numRows, &mut, entThreshold, scoreThreshold](size_t threadIdx){
 
                 torch::Tensor row = predictions[threadIdx];
 
@@ -51,6 +54,7 @@ namespace t24e::local_mapper::post_processing {
 
                 // verify filter conditions 
                 if(entropy < entThreshold && max > scoreThreshold) {
+                    std::unique_lock lk(mut);
                     filteredPredictions[numRows++] = row;
                 }
             };
@@ -126,14 +130,18 @@ namespace t24e::local_mapper::post_processing {
 
         ThreadPool pool(std::thread::hardware_concurrency());
 
+        // mutex to protect concurrent access to the bounding boxes vector
+        std::mutex mut;
+
         // perform non-maximum supression in a thread pool
         for(int i = 0; i < boundingBoxes.size(); i++) {
             for(int j = i + 1; j < boundingBoxes.size(); j++) {
 
-                auto job = [&boundingBoxes, &i, &j, &IoUThreshold](size_t threadIdx){
+                auto job = [&boundingBoxes, &i, &j, &IoUThreshold, &mut](size_t threadIdx){
 
                     float iou = calculateIoU(boundingBoxes[i], boundingBoxes[j]);
                     if(iou > IoUThreshold) {
+                        std::unique_lock<std::mutex> lk(mut);
                         boundingBoxes.erase(boundingBoxes.begin() + j);
                         j--;
                     }
