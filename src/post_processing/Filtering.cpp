@@ -16,19 +16,40 @@ namespace t24e::local_mapper::post_processing {
         return -entropy;
     }
 
-    torch::Tensor filterByEntropy(torch::Tensor& predictions, float threshold) {
+    float Filtering::maxRow(torch::Tensor& row) {
+        // calculate the entropy of the row
+        float max = 0;
+        for(int i = 0; i < row.size(0); i++) {
+            float p = row[i].item<float>();
+            if(p > max) {
+                max = p;
+            }
+        }
+        return max;
+    }
+
+    std::pair<torch::Tensor,size_t> torch::Tensor Filtering::filter(torch::Tensor& predictions, float entThreshold, float scoreThreshold){
+        // filtered row counter
         size_t numRows = 0;
 
-        // filter the predictions based on the entropy of the prediction
+        // initialize the filtered predictions tensor with the same size as the predictions tensor filled with zeros
         torch::Tensor filteredPredictions = torch::zeros_like(predictions);
+
+        // TODO: implement thread pooling
         for(int i = 0; i < predictions.size(0); i++) {
+
             torch::Tensor row = predictions[i];
+
+            // calculate the entropy and maximum of the row
             float entropy = entropyRow(row);
-            if(entropy < threshold) {
+            float max = maxRow(row);
+
+            // verify filter conditions 
+            if(entropy < entThreshold && max > scoreThreshold) {
                 filteredPredictions[numRows++] = row;
             }
         }
-        return filteredPredictions;
+        return std::make_pair(filteredPredictions, numRows);
     }
 
     float Filtering::calculateIoU(cnn::bounding_box_t& box1, cnn::bounding_box_t& box2) {

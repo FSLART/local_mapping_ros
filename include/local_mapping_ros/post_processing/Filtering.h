@@ -20,13 +20,17 @@ namespace t24e::local_mapper::post_processing {
             /*! \brief Calculate the entropy for a single row. */
             static float entropyRow(torch::Tensor& row);
 
+            /*! \brief Calculate the maximum for a single row. */
+            static float maxRow(torch::Tensor& row);
+
             /*! \brief Filter the predictions based on the entropy of the prediction. 
                 \param predictions The predictions scores Torch tensor.
-                \param threshold The maximum entropy threshold.
-                \return Filtering predictions tensor with the allowed entropy.
+                \param entThreshold The maximum entropy threshold.
+                \param scoreThreshold The minimum score threshold.
+                \return A pair containing filtered predictions tensor with the allowed entropy and the number of predictions.
             */
-            static torch::Tensor filterByEntropy(torch::Tensor& predictions,
-            float threshold);
+            static std::pair<torch::Tensor,size_t> filter(torch::Tensor& predictions,
+            float entThreshold, float scoreThreshold);
 
             /*! \brief Calculate Intersection over Union for a pair of boxes 
                 \param box1 The first bounding box.
