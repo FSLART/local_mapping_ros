@@ -35,20 +35,35 @@ namespace t24e::local_mapper::post_processing {
         // initialize the filtered predictions tensor with the same size as the predictions tensor filled with zeros
         torch::Tensor filteredPredictions = torch::zeros_like(predictions);
 
-        // TODO: implement thread pooling
+        // create the thread pool
+        ThreadPool pool(std::thread::hardware_concurrency());
+
+        // iterate predictions and add jobs to the pool
         for(int i = 0; i < predictions.size(0); i++) {
 
-            torch::Tensor row = predictions[i];
+            auto job = [&predictions, &filteredPredictions, &numRows, entThreshold, scoreThreshold](size_t threadIdx){
 
-            // calculate the entropy and maximum of the row
-            float entropy = entropyRow(row);
-            float max = maxRow(row);
+                torch::Tensor row = predictions[threadIdx];
 
-            // verify filter conditions 
-            if(entropy < entThreshold && max > scoreThreshold) {
-                filteredPredictions[numRows++] = row;
-            }
+                // calculate the entropy and maximum of the row
+                float entropy = entropyRow(row);
+                float max = maxRow(row);
+
+                // verify filter conditions 
+                if(entropy < entThreshold && max > scoreThreshold) {
+                    filteredPredictions[numRows++] = row;
+                }
+            };
+            
+            pool.addJob(job);
         }
+
+        // start the pool
+        pool.start();
+
+        // wait for completion
+        pool.join();
+
         return std::make_pair(filteredPredictions, numRows);
     }
 

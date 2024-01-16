@@ -6,7 +6,9 @@
 #define LOCAL_MAPPING_CORE_FILTERING_H
 
 #include <local_mapping_ros/cnn/types.h>
+#include <local_mapping_ros/post_processing/ThreadPool.h>
 #include <vector>
+#include <algorithm>
 #include <torch/torch.h>
 
 namespace t24e::local_mapper::post_processing {
