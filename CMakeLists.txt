@@ -5,10 +5,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# add or remove this to enable or disable CUDA
+set(WITH_CUDA ON)
+
 set(TORCH_PATH /usr/local/lib/libtorch)
 # set(CMAKE_PREFIX_PATH /usr/local/lib/libtorch)
-set(CMAKE_CUDA_ARCHITECTURES 75)
-set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 
 set(CMAKE_BUILD_TYPE Debug)
 
@@ -30,15 +31,24 @@ find_package(lart_msgs REQUIRED)
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+
+# verify that "WITH_CUDA" is set
+if(WITH_CUDA)
+  message(STATUS "Compiling with CUDA support")
+  add_compile_definitions(WITH_CUDA)
+  set(CMAKE_CUDA_ARCHITECTURES 75)
+  set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+  set(CUDA_INCLUDE_DIRS /usr/local/cuda/include)
+  find_package(CUDA REQUIRED)
+else()
+  message(STATUS "Compiling without CUDA support")
+endif()
+
 find_package(Torch REQUIRED PATHS ${TORCH_PATH})
-find_package(CUDA REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
-
-# add or remove this to enable or disable CUDA
-# add_compile_definitions(WITH_CUDA)
 
 add_executable(local_mapper_node 
   src/local_mapper_node.cpp
