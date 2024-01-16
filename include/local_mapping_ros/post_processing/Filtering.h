@@ -28,6 +28,13 @@ namespace t24e::local_mapper::post_processing {
             static torch::Tensor filterByEntropy(torch::Tensor& predictions,
             float threshold);
 
+            /*! \brief Calculate Intersection over Union for a pair of boxes 
+                \param box1 The first bounding box.
+                \param box2 The second bounding box.
+                \return The intersection over union.
+            */
+            static float calculateIoU(cnn::bounding_box_t& box1, cnn::bounding_box_t& box2);
+
             /*! \brief Filter predictions using non-maximum supression intersection over union.
                 \param predictions The predictions scores Torch tensor.
                 \param scoreThreshold The minimun score threshold.
