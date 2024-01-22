@@ -6,7 +6,7 @@
 
 namespace t24e::local_mapper::post_processing {
 
-    float Filtering::entropyRow(torch::Tensor& row) {
+    float Filtering::entropyRow(at::Tensor& row) {
         // calculate the entropy of the row
         float entropy = 0;
         for(int i = 0; i < row.size(0); i++) {
@@ -16,7 +16,7 @@ namespace t24e::local_mapper::post_processing {
         return -entropy;
     }
 
-    float Filtering::maxRow(torch::Tensor& row) {
+    float Filtering::maxRow(at::Tensor& row) {
         // calculate the entropy of the row
         float max = 0;
         for(int i = 0; i < row.size(0); i++) {
@@ -28,15 +28,15 @@ namespace t24e::local_mapper::post_processing {
         return max;
     }
 
-    std::pair<torch::Tensor,size_t> torch::Tensor Filtering::filter(torch::Tensor& predictions, float entThreshold, float scoreThreshold){
+    std::pair<at::Tensor,size_t> Filtering::filter(at::Tensor& predictions, float entThreshold, float scoreThreshold) {
         // filtered row counter
         size_t numRows = 0;
 
         // initialize the filtered predictions tensor with the same size as the predictions tensor filled with zeros
-        torch::Tensor filteredPredictions = torch::zeros_like(predictions);
+        at::Tensor filteredPredictions = torch::zeros_like(predictions);
 
         // create the thread pool
-        ThreadPool pool(std::thread::hardware_concurrency());
+        ThreadPool pool((std::thread::hardware_concurrency()));
 
         // mutex to protect concurrent access to the filtered predictions tensor
         std::mutex mut;
@@ -46,7 +46,7 @@ namespace t24e::local_mapper::post_processing {
 
             auto job = [&predictions, &filteredPredictions, &numRows, &mut, entThreshold, scoreThreshold](size_t threadIdx){
 
-                torch::Tensor row = predictions[threadIdx];
+                at::Tensor row = predictions[threadIdx];
 
                 // calculate the entropy and maximum of the row
                 float entropy = entropyRow(row);
@@ -59,7 +59,7 @@ namespace t24e::local_mapper::post_processing {
                 }
             };
             
-            pool.addJob(job);
+            pool.queueJob(job);
         }
 
         // start the pool
@@ -89,35 +89,35 @@ namespace t24e::local_mapper::post_processing {
         int unionArea = area1 + area2 - interArea;
 
         // compute the intersection over union
-        float iou = static_cast<float>(interArea) / static_cast<float>unionArea;
+        float iou = static_cast<float>(interArea) / static_cast<float>(unionArea);
 
         return iou;
     }
 
-    std::vector<cnn::bounding_box_t> Filtering::nmsIoU(torch::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
-    torch::Tensor& boundingBoxes) {
+    std::vector<cnn::bounding_box_t> Filtering::nmsIoU(at::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
+    at::Tensor& boundingBoxesTensor) {
 
         std::vector<cnn::bounding_box_t> boundingBoxes;
 
         // filter the predictions based on the entropy of the prediction
-        std::pair<torch::Tensor,size_t> filtered;
-        torch::Tensor filteredPredictions = predictions;
+        std::pair<at::Tensor,size_t> filtered;
+        at::Tensor filteredPredictions = predictions;
 
         filtered = filter(predictions, entThreshold, scoreThreshold);
         filteredPredictions = filtered.first;
 
         // convert the tensor to a vector of bounding boxes
         for(int i = 0; i < filteredPredictions.size(0); i++) {
-            torch::Tensor row = filteredPredictions[i];
+            at::Tensor row = filteredPredictions[i];
             float score = row[0].item<float>();
             if(score > scoreThreshold) {
                 // get the bounding box
                 cnn::bounding_box_t box;
                 box.score = score;
-                box.box.first.first = boundingBoxes[i][1].item<int>();
-                box.box.first.second = boundingBoxes[i][2].item<int>();
-                box.box.second.first = boundingBoxes[i][3].item<int>();
-                box.box.second.second = boundingBoxes[i][4].item<int>();
+                box.box.first.first = boundingBoxesTensor[i][1].item<int>();
+                box.box.first.second = boundingBoxesTensor[i][2].item<int>();
+                box.box.second.first = boundingBoxesTensor[i][3].item<int>();
+                box.box.second.second = boundingBoxesTensor[i][4].item<int>();
                 boundingBoxes.push_back(box);
             }
         }
@@ -133,10 +133,12 @@ namespace t24e::local_mapper::post_processing {
         std::mutex mut;
 
         // perform non-maximum supression in a thread pool
-        for(int i = 0; i < boundingBoxes.size(); i++) {
-            for(int j = i + 1; j < boundingBoxes.size(); j++) {
+        for(size_t i = 0; i < boundingBoxes.size(); i++) {
+            for(size_t j = i + 1; j < boundingBoxes.size(); j++) {
 
                 auto job = [&boundingBoxes, &i, &j, &IoUThreshold, &mut](size_t threadIdx){
+
+                    (void)(threadIdx);
 
                     float iou = calculateIoU(boundingBoxes[i], boundingBoxes[j]);
                     if(iou > IoUThreshold) {
@@ -147,7 +149,7 @@ namespace t24e::local_mapper::post_processing {
                 };
 
                 // at each iteration, add a job to the pool
-                pool.addJob(job);
+                pool.queueJob(job);
             }
         }
 

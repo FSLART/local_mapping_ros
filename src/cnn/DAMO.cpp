@@ -124,15 +124,15 @@ namespace t24e::local_mapper::cnn {
 
         // TODO: FILTERING USING CUDA (GPU)
 
-        bounding_boxes = Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD, 
-                        IOU_THRESHOLD, bboxes, true);
+        bounding_boxes = post_processing::Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD,
+                        IOU_THRESHOLD, bboxes);
     
         #else
 
         // FILTERING USING A THREAD POOL (CPU)
 
-        bounding_boxes = Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD, 
-                        IOU_THRESHOLD, bboxes, true);
+        bounding_boxes = post_processing::Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD,
+                        IOU_THRESHOLD, bboxes);
 
         #endif
 
