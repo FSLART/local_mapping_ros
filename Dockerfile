@@ -45,5 +45,4 @@ COPY model/ /ros2_ws/model/
 CMD /bin/bash -c "source /opt/ros/humble/setup.bash && \
  cd /ros2_ws && \
  source install/local_setup.bash && \
- cd src/local_mapping_ros/launch && \
- ros2 launch mapper.launch"
+ ros2 launch local_mapping_ros mapper.launch"
