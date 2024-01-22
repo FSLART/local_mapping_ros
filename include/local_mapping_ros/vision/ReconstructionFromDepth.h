@@ -16,6 +16,11 @@ namespace t24e {
 
             class ReconstructionFromDepth {
                 public:
+                    /*! \brief Deproject a pixel to a point in camera frame. 
+                        \param cam The camera object. Has images.
+                        \param pixel The pixel to deproject. xy coordinates and depth.
+                        \return The point in camera frame.
+                    */
                     static geometry_msgs::msg::Point deprojectPixelToPoint(local_mapper::vision::RGBDCamera& cam,
                                                                Eigen::Vector3d pixel);
             };

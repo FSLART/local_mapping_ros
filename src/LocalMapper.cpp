@@ -14,17 +14,26 @@ namespace t24e {
             this->declare_parameter("tf_lookup_rate", 10.0);
             this->declare_parameter("camera_frame_id", "camera_link");
             this->declare_parameter("car_frame_id", "base_link");
-            this->declare_parameter("rgb_topic", "/camera/color/image_raw");
-            this->declare_parameter("depth_topic", "/camera/depth/image_rect_raw");
-            this->declare_parameter("camera_info_topic", "/camera/depth/camera_info");
+            this->declare_parameter("rgb_topic", "/camera/camera/color/image_raw");
+            this->declare_parameter("depth_topic", "/camera/camera/aligned_depth_to_color/image_raw");
+            this->declare_parameter("camera_info_topic", "/camera/camera/aligned_depth_to_color/camera_info");
 
             // instantiate the camera
             this->camera = std::make_unique<local_mapper::vision::RGBDCamera>();
 
+            // set the default camera transform as identity
+            Eigen::Affine3d tf = Eigen::Affine3d::Identity();
+            this->setCameraTf(tf);
+
             std::string modelPath(this->get_parameter("model_path").as_string());
             // instantiate and initialize the cone detector
             this->detector = std::make_unique<local_mapper::cnn::DAMO>(modelPath);
-            this->detector->init();
+            try {
+                this->detector->init();
+            } catch(std::exception& e) {
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Error initializing the cone detector: %s", e.what());
+                return;
+            }
 
             // subscribe to the depth image topic
             this->depthImageSub = this->create_subscription<sensor_msgs::msg::Image>(
@@ -44,11 +53,16 @@ namespace t24e {
                         this->addDepthImage(cv_ptr->image);
                     });
 
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Subscribed to depth image topic");
+
             // subscribe to the color image topic
             this->colorImageSub = this->create_subscription<sensor_msgs::msg::Image>(
                     this->get_parameter("rgb_topic").as_string(),
                     10,
                     [this](const sensor_msgs::msg::Image::SharedPtr msg) {
+
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Received color image");
+
                         // convert the ROS image to a cv::Mat
                         cv_bridge::CvImagePtr cv_ptr;
                         try {
@@ -61,6 +75,8 @@ namespace t24e {
                         // add the image to the camera
                         this->addColorImage(cv_ptr->image);
                     });
+
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Subscribed to color image topic");
 
             // subscribe to camerainfo topic
             this->cameraInfoSub = this->create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -76,6 +92,8 @@ namespace t24e {
                         // set the camera's intrinsic matrix
                         this->setK(K);
                     });
+
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Subscribed to camera info topic");
 
 
             // initialize the cones publisher
@@ -94,8 +112,11 @@ namespace t24e {
 
             // create the tf timer to update the tf
             this->tfTimer = this->create_wall_timer(
-                    std::chrono::milliseconds((int) ((double) 1 / this->get_parameter("tf_lookup_rate").as_double()) * 1000),
+                    std::chrono::milliseconds(1000),
                     [this]() {
+
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Updating camera transform");
+
                         // get the transform from the camera to the car's base frame
                         // this transform is published by the 
                         geometry_msgs::msg::TransformStamped tf;
@@ -107,9 +128,7 @@ namespace t24e {
                         }
 
                         // convert the transform to an Eigen matrix
-                        Eigen::Affine3d tfEigen;
-                        tfEigen.matrix() << tf.transform.rotation.w, tf.transform.rotation.x, tf.transform.rotation.y, tf.transform.rotation.z,
-                                tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z, 1;
+                        Eigen::Affine3d tfEigen = tf2::transformToEigen(tf);
 
                         // set the camera's transform
                         this->setCameraTf(tfEigen);
@@ -119,38 +138,47 @@ namespace t24e {
                 std::chrono::milliseconds((int) ((double) 1 / this->get_parameter("map_rate").as_double()) * 1000),
                 [this]() {
 
-                    // get the current map
-                    // this is the map consumer, so it will idle waiting for a new map using a condition variable
-                    lart_msgs::msg::ConeArray map = this->getCurrentMap();
+                    auto mapRoutine = [this]() {
+                        // get the current map
+                        // this is the map consumer, so it will idle waiting for a new map using a condition variable
+                        lart_msgs::msg::ConeArray map = this->getCurrentMap();
 
-                    // initialize the marker array
-                    visualization_msgs::msg::MarkerArray markers;
-                    for(auto c : map.cones) {
+                        // initialize the marker array
+                        visualization_msgs::msg::MarkerArray markers;
+                        for(auto c : map.cones) {
 
-                        // get the color
-                        std::vector<std::uint8_t> color = local_mapper::Utils::getColorByLabel((std::int16_t) c.class_type.data);
+                            // get the color
+                            std::vector<std::uint8_t> color = local_mapper::Utils::getColorByLabel((std::int16_t) c.class_type.data);
 
-                        visualization_msgs::msg::Marker marker;
-                        marker.header.frame_id = this->get_parameter("car_frame_id").as_string();
-                        marker.header.stamp = this->get_clock()->now();
-                        marker.ns = "cones";
-                        marker.type = visualization_msgs::msg::Marker::CYLINDER;
-                        marker.action = visualization_msgs::msg::Marker::ADD;
-                        marker.pose.position = c.position;
-                        marker.scale.x = 0.1;
-                        marker.scale.y = 0.1;
-                        marker.scale.z = 0.2;
-                        marker.color.a = 1.0;
-                        marker.color.r = color[0];
-                        marker.color.g = color[1];
-                        marker.color.b = color[2];
-                        markers.markers.push_back(marker);
-                    }
-                    // publish the markers
-                    this->markersPub->publish(markers);
-                    
-                    // publish the cones
-                    this->conesPub->publish(map);
+                            visualization_msgs::msg::Marker marker;
+                            marker.header.frame_id = this->get_parameter("car_frame_id").as_string();
+                            marker.header.stamp = this->get_clock()->now();
+                            marker.ns = "cones";
+                            marker.type = visualization_msgs::msg::Marker::CYLINDER;
+                            marker.action = visualization_msgs::msg::Marker::ADD;
+                            marker.pose.position = c.position;
+                            marker.scale.x = 0.1;
+                            marker.scale.y = 0.1;
+                            marker.scale.z = 0.2;
+                            marker.color.a = 1.0;
+                            marker.color.r = color[0];
+                            marker.color.g = color[1];
+                            marker.color.b = color[2];
+                            markers.markers.push_back(marker);
+                        }
+
+                        // publish the markers
+                        this->markersPub->publish(markers);
+                        
+                        // publish the cones
+                        this->conesPub->publish(map);
+                    };
+
+                    /*
+                    std::thread t(mapRoutine);
+                    t.detach();*/
+
+                    mapRoutine();
                 }
             );
 
@@ -232,7 +260,8 @@ namespace t24e {
             std::unique_lock lock(this->mapMutex);
 
             // wait for the condition variable
-            this->mapCond.wait(lock, [&]() { return this->mapReady; });
+            this->mapCond.wait_for(lock, std::chrono::milliseconds((int) ((double) 1 / this->get_parameter("map_rate").as_double()) * 1000), 
+                            [&]() { return this->mapReady; });
 
             // update the flag
             this->mapReady = false;

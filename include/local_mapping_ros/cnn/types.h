@@ -14,6 +14,7 @@ namespace t24e::local_mapper::cnn {
         // the first pair is the origin. the second is width and height
         std::pair<std::pair<int,int>,std::pair<int,int>> box;
         uint32_t label;
+        float score;
     };
 }
 

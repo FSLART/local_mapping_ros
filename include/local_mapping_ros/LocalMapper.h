@@ -13,6 +13,7 @@
 #include "lart_msgs/msg/cone_array.hpp"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
+#include "tf2_eigen/tf2_eigen.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <local_mapping_ros/vision/RGBCamera.h>
 #include <local_mapping_ros/vision/RGBDCamera.h>

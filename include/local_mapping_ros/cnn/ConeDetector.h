@@ -8,6 +8,9 @@
 #include <local_mapping_ros/cnn/types.h>
 #include <opencv2/opencv.hpp>
 
+#define DETECTOR_WIDTH 640
+#define DETECTOR_HEIGHT 640
+
 namespace t24e::local_mapper::cnn {
 
     enum cone_class_t {
@@ -31,7 +34,7 @@ namespace t24e::local_mapper::cnn {
             virtual void init() = 0;
 
             /*! \brief Detect cones on a color image. */
-            virtual std::vector<bounding_box_t> detectCones(const cv::Mat& img) = 0;
+            virtual std::vector<bounding_box_t> detectCones(cv::Mat img) = 0;
     };
 } // t24e::local_mapper::cnn
 

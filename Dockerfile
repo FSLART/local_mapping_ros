@@ -39,6 +39,9 @@ RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
  source install/setup.bash && \
  colcon build --parallel-workers 6 --symlink-install --packages-select local_mapping_ros --cmake-args -DCMAKE_BUILD_TYPE=Release"
 
+# copy the torchscript models
+COPY model/ /ros2_ws/model/
+
 CMD /bin/bash -c "source /opt/ros/humble/setup.bash && \
  cd /ros2_ws && \
  source install/local_setup.bash && \
