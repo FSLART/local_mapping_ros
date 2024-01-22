@@ -9,7 +9,16 @@ namespace t24e::local_mapper::vision {
 
         Eigen::Vector3d point;
 
-        point = (cam.getR().inverse() * cam.getK().inverse() * pixel) - cam.getT();
+        // get x and y coordinates
+        double point_x = (pixel[0] - cam.getK().coeff(0, 2)) / cam.getK().coeff(0, 0);
+        double point_y = (pixel[1] - cam.getK().coeff(1, 2)) / cam.getK().coeff(1, 1);
+        double point_z = 1;
+
+        // assign the coordinates to the eigen vector
+        point << point_x, point_y, point_z;
+
+        // normalize the point to the distance (euclidean norm)
+        point = point / point.norm() * pixel[2];
 
         geometry_msgs::msg::Point point_msg;
 
