@@ -121,88 +121,18 @@ namespace t24e::local_mapper::cnn {
         std::vector<bounding_box_t> bounding_boxes;
 
         #ifdef WITH_CUDA
-        
-        // TODO: FILTERING USING CUDA (GPU)
-        throw std::runtime_error("CUDA filtering not implemented!");
 
+        // TODO: FILTERING USING CUDA (GPU)
+
+        bounding_boxes = Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD, 
+                        IOU_THRESHOLD, bboxes, true);
+    
         #else
 
         // FILTERING USING A THREAD POOL (CPU)
 
-        // define a mutex to access the valid samples set
-        std::mutex mut;
-
-        // define a job to calculate the entropy and find the maxima
-        auto job = [classProbs, bboxes, &mut, &bounding_boxes](size_t threadIdx) {
-
-            // get the row index
-            // TODO: thread index should be reset. overflow can crash execution.
-            size_t idx = threadIdx;
-
-            // std::cout << "-----------JOB " << idx << "---------------" << std::endl;
-
-            float max = -1.0f;
-            ssize_t maxIndex = -1;
-
-            float entropy = 0;
-
-            // for each class of the sample
-            for(ssize_t classIdx = 0; classIdx < classProbs.sizes()[2]; classIdx++) {
-
-                float p = classProbs[0][idx][classIdx].item().toFloat();
-                // std::cout << "p=" << p << std::endl;
-
-                // check if this probability is the max of the sample
-                if(p > max) {
-                    max = p;
-                    maxIndex = classIdx;
-                }
-
-                // construct the entropy
-                entropy += p * logf(p);
-            }
-
-            entropy = -entropy;
-
-            // std::cout << "Entropy: " << entropy << std::endl;
-
-            /*
-            // if the entropy value is elegible as a valid detection
-            if(entropy <= MAX_ENTROPY_THRESHOLD) {
-
-                // create the bounding box, extracting information from the tensors
-                bounding_box_t box;
-                box.box.first.first = bboxes[0][idx][0].item().toInt();
-                box.box.first.second = bboxes[0][idx][1].item().toInt();
-
-                box.box.second.first = bboxes[0][idx][2].item().toInt();
-                box.box.second.second = bboxes[0][idx][3].item().toInt();
-
-                box.label = maxIndex;
-
-                // acquire the valid samples set mutex
-                std::unique_lock<std::mutex> lk(mut);
-
-                // add the new bounding box
-                bounding_boxes.push_back(box);
-            }*/
-        };
-
-        // for each sample, start a job
-        for(ssize_t i = 0; i < classProbs.sizes()[1]; i++) {
-            
-            // enqueue the job
-            this->threadPool->queueJob(job);
-        }
-
-        // start the pool
-        this->threadPool->start();
-
-        // wait for the pool to finish
-        this->threadPool->join();
-
-        // reset thread index
-        this->threadPool->resetThreadIdx();
+        bounding_boxes = Filtering::nmsIoU(classProbs, MAX_ENTROPY_THRESHOLD, MIN_SCORE_THRESHOLD, 
+                        IOU_THRESHOLD, bboxes, true);
 
         #endif
 
