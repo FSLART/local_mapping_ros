@@ -16,6 +16,8 @@ set(CMAKE_BUILD_TYPE Debug)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(CURL REQUIRED)
+find_package(TIFF REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -64,7 +66,7 @@ add_executable(local_mapper_node
 )
 ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV Torch)
 
-target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${TORCH_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY})
+target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${TORCH_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY})
 
 # Install launch files
 install(DIRECTORY 
