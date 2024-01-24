@@ -112,8 +112,6 @@ namespace t24e::local_mapper::cnn {
         // convert the class probabilities to tensor
         torch::Tensor classProbs = outputs->elements()[0].toTensor();
 
-        std::cout << classProbs[0].slice(1, 0, 5) << std::endl;
-
         // convert the bounding boxes to tensor
         torch::Tensor bboxes = outputs->elements()[1].toTensor();
 

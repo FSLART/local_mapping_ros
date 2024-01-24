@@ -21,10 +21,10 @@ namespace t24e::local_mapper::post_processing {
             Filtering();
 
             /*! \brief Calculate the entropy for a single row. */
-            static float entropyRow(at::Tensor& row);
+            static float entropyRow(at::Tensor row);
 
             /*! \brief Calculate the maximum for a single row. */
-            static float maxRow(at::Tensor& row);
+            static float maxRow(at::Tensor row);
 
             /*! \brief Filter the predictions based on the entropy of the prediction. 
                 \param predictions The predictions scores Torch tensor.
@@ -32,7 +32,7 @@ namespace t24e::local_mapper::post_processing {
                 \param scoreThreshold The minimum score threshold.
                 \return A pair containing filtered predictions tensor with the allowed entropy and the number of predictions.
             */
-            static std::pair<at::Tensor,size_t> filter(at::Tensor& predictions,
+            static std::pair<at::Tensor,size_t> filter(at::Tensor predictions,
             float entThreshold, float scoreThreshold);
 
             /*! \brief Calculate Intersection over Union for a pair of boxes 
@@ -40,7 +40,7 @@ namespace t24e::local_mapper::post_processing {
                 \param box2 The second bounding box.
                 \return The intersection over union.
             */
-            static float calculateIoU(cnn::bounding_box_t& box1, cnn::bounding_box_t& box2);
+            static float calculateIoU(cnn::bounding_box_t box1, cnn::bounding_box_t box2);
 
             /*! \brief Filter predictions using non-maximum supression intersection over union.
                 \param predictions The predictions scores Torch tensor.
@@ -48,8 +48,8 @@ namespace t24e::local_mapper::post_processing {
                 \param IoUThreshold The intersection over union threshold.
                 \param boundingBoxes The bounding boxes Torch tensor.
             */
-            static std::vector<cnn::bounding_box_t> nmsIoU(at::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
-            at::Tensor& boundingBoxes);
+            static std::vector<cnn::bounding_box_t> nmsIoU(at::Tensor predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
+            at::Tensor boundingBoxes);
     };
 
 };

@@ -6,7 +6,7 @@
 
 namespace t24e::local_mapper::post_processing {
 
-    float Filtering::entropyRow(at::Tensor& row) {
+    float Filtering::entropyRow(at::Tensor row) {
         // calculate the entropy of the row
         float entropy = 0;
         for(int i = 0; i < row.size(0); i++) {
@@ -16,7 +16,7 @@ namespace t24e::local_mapper::post_processing {
         return -entropy;
     }
 
-    float Filtering::maxRow(at::Tensor& row) {
+    float Filtering::maxRow(at::Tensor row) {
         // calculate the entropy of the row
         float max = 0;
         for(int i = 0; i < row.size(0); i++) {
@@ -28,7 +28,7 @@ namespace t24e::local_mapper::post_processing {
         return max;
     }
 
-    std::pair<at::Tensor,size_t> Filtering::filter(at::Tensor& predictions, float entThreshold, float scoreThreshold) {
+    std::pair<at::Tensor,size_t> Filtering::filter(at::Tensor predictions, float entThreshold, float scoreThreshold) {
         // filtered row counter
         size_t numRows = 0;
 
@@ -47,6 +47,8 @@ namespace t24e::local_mapper::post_processing {
             auto job = [&predictions, &filteredPredictions, &numRows, &mut, entThreshold, scoreThreshold](size_t threadIdx){
 
                 at::Tensor row = predictions[threadIdx];
+
+                std::cout << predictions.sizes() << std::endl;
 
                 // calculate the entropy and maximum of the row
                 float entropy = entropyRow(row);
@@ -71,7 +73,7 @@ namespace t24e::local_mapper::post_processing {
         return std::make_pair(filteredPredictions, numRows);
     }
 
-    float Filtering::calculateIoU(cnn::bounding_box_t& box1, cnn::bounding_box_t& box2) {
+    float Filtering::calculateIoU(cnn::bounding_box_t box1, cnn::bounding_box_t box2) {
         
         // get coordinates of intersection rectangle
         int xA = std::max(box1.box.first.first, box2.box.first.first);
@@ -94,16 +96,16 @@ namespace t24e::local_mapper::post_processing {
         return iou;
     }
 
-    std::vector<cnn::bounding_box_t> Filtering::nmsIoU(at::Tensor& predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
-    at::Tensor& boundingBoxesTensor) {
+    std::vector<cnn::bounding_box_t> Filtering::nmsIoU(at::Tensor predictions, float entThreshold, float scoreThreshold, float IoUThreshold,
+    at::Tensor boundingBoxesTensor) {
 
         std::vector<cnn::bounding_box_t> boundingBoxes;
 
         // filter the predictions based on the entropy of the prediction
         std::pair<at::Tensor,size_t> filtered;
-        at::Tensor filteredPredictions = predictions;
+        at::Tensor filteredPredictions = predictions[0];
 
-        filtered = filter(predictions, entThreshold, scoreThreshold);
+        filtered = filter(predictions[0], entThreshold, scoreThreshold);
         filteredPredictions = filtered.first;
 
         // convert the tensor to a vector of bounding boxes
