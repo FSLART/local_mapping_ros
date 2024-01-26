@@ -12,7 +12,10 @@ set(CMAKE_BUILD_TYPE Debug)
 
 # ONNX runtime
 set(ONNX_INCLUDE_DIR /usr/local/include/onnxruntime)
-set(ONNX_LIBRARY /usr/local/lib/libonnxruntime.so)
+set(ONNX_LIBRARIES /usr/local/lib/libonnxruntime.so /usr/local/lib/libonnxruntime_providers_shared.so)
+if(WITH_CUDA)
+  set(ONNX_LIBRARIES ${ONNX_LIBRARIES} /usr/local/lib/libonnxruntime_providers_cuda.so)
+endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -65,7 +68,7 @@ add_executable(local_mapper_node
 )
 ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV)
 
-target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY} ${ONNX_LIBRARY})
+target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY} ${ONNX_LIBRARIES})
 
 # Install launch files
 install(DIRECTORY 
