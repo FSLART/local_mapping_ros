@@ -4,9 +4,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # install dependencies
 RUN apt update
-RUN apt install git build-essential libeigen3-dev -y
+RUN apt upgrade -y
+RUN apt install git build-essential libeigen3-dev gdb -y
 
-RUN apt install python3-rosdep python3-colcon-common-extensions -y
+RUN apt install python3-rosdep python3-colcon-common-extensions ros-humble-ament-cmake ros-humble-ament-package -y
 
 # add lart_msgs
 RUN mkdir -p /ros2_ws/src
