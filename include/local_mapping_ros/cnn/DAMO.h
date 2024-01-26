@@ -9,8 +9,7 @@
 #include <local_mapping_ros/vision/Utils.h>
 #include <local_mapping_ros/post_processing/ThreadPool.h>
 #include <local_mapping_ros/post_processing/Filtering.h>
-#include <torch/torch.h>
-#include <torch/script.h>
+#include <onnxruntime_cxx_api.h>
 #include <thread>
 #include <set>
 #include <mutex>
@@ -25,17 +24,25 @@ namespace t24e::local_mapper::cnn {
     class DAMO : private ConeDetector {
 
         private:
-            /*! \brief The TorchScript model. */
-            torch::jit::script::Module torchModule;
+
+            /*! \brief The ONNX runtime environment. */
+            std::unique_ptr<Ort::Env> env = nullptr;
+
+            /*! \brief The ONNX runtime session. */
+            Ort::Session session = Ort::Session(nullptr);
+
+            /*! \brief The ONNX runtime session options. */
+            Ort::SessionOptions sessionOptions;
 
             /*! \brief Device to use (CPU or GPU). Defined in the CMakeLists.txt file. */
             #ifdef WITH_CUDA
-                torch::Device device = torch::Device(torch::kCUDA);
-            #else
-                torch::Device device = torch::Device(torch::kCPU);
-            #endif
 
-            torch::DeviceType deviceType;
+                /*! \brief ONNX runtime CUDA options. */
+                OrtCUDAProviderOptions cudaOptions;
+
+            #else
+
+            #endif
 
             /*! \brief The TorchScript model path to load. */
             std::string modelPath;
@@ -44,9 +51,6 @@ namespace t24e::local_mapper::cnn {
             bool modelPathSet = false;
 
             std::unique_ptr<ThreadPool> threadPool;
-
-            /*! \brief Validate that the selected device is available. */
-            void validateDevice();
 
         public:
             DAMO(std::string& modelPath);

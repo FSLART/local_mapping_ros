@@ -3,6 +3,7 @@
 //
 
 #include "local_mapping_ros/cnn/DAMO.h"
+#include "local_mapping_ros/post_processing/Filtering.h"
 
 namespace t24e::local_mapper::cnn {
 
@@ -11,27 +12,9 @@ namespace t24e::local_mapper::cnn {
         this->modelPath = modelPath;
         this->modelPathSet = true;
 
-        // initialize the device
-        #ifdef WITH_CUDA
-            this->device = torch::Device(torch::kCUDA);
-            this->validateDevice();
-        #else
-            this->device = torch::Device(torch::kCPU);
-        #endif
-
         // initialize the thread pool manager
         this->threadPool = std::make_unique<ThreadPool>(std::thread::hardware_concurrency());
 
-    }
-
-    void DAMO::validateDevice() {
-
-        if(this->device == torch::Device(torch::kCUDA)) {
-            if(!torch::cuda::is_available()) {
-                std::cerr << "CUDA is not available!" << std::endl;
-                throw std::runtime_error("CUDA is not available!");
-            }
-        }
     }
 
     void DAMO::init() {
@@ -42,20 +25,27 @@ namespace t24e::local_mapper::cnn {
 
         // load the torchscript model
         try {
-            std::cout << "Loading the TorchScript module at " << this->modelPath << std::endl;
-            this->validateDevice();
+            std::cout << "Loading the ONNX model at " << this->modelPath << std::endl;
 
-            this->torchModule = torch::jit::load(this->modelPath, this->device);
-            this->torchModule.to(this->device, torch::kFloat);
-            
-            this->torchModule.eval(); // set the model to evaluation mode
+            // initialize the environment
+            this->env = std::make_unique<Ort::Env>();
 
-        } catch(const c10::Error& e) {
+            #ifdef WITH_CUDA
+                // set the device options
+                this->cudaOptions.device_id = 0;
+                this->sessionOptions.AppendExecutionProvider_CUDA(this->cudaOptions);
+
+            #endif
+
+            // initialize the session
+            this->session = Ort::Session(*env, modelPath.c_str(), sessionOptions);
+
+        } catch(const Ort::Exception& e) {
             std::cerr << "Error loading the TorchScript module: " << e.what() << std::endl;
-            throw std::runtime_error("Error loading the TorchScript module!");
+            throw std::runtime_error("Error loading the ONNX model!");
         }
 
-        std::cout << "TorchScript module loaded successfully!" << std::endl;
+        std::cout << "ONNX model loaded successfully!" << std::endl;
 
         this->initDone = true;
     }
