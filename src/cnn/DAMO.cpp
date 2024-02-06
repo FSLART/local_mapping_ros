@@ -40,8 +40,20 @@ namespace t24e::local_mapper::cnn {
             // initialize the session
             this->session = Ort::Session(*env, modelPath.c_str(), sessionOptions);
 
+            std::cout << "** MODEL INFO **" << std::endl;
+            size_t inputs = this->session.GetInputCount();
+            std::cout << "Inputs: " << inputs << std::endl;
+            for(size_t i = 0; i < inputs; i++) {
+                std::cout << "\t - " << this->session.GetInputNameAllocated(i, allocator).get() << std::endl;
+            }
+            size_t outputs = this->session.GetOutputCount();
+            std::cout << "Outputs: " << outputs << std::endl;
+            for(size_t i = 0; i < outputs; i++) {
+                std::cout << "\t - " << this->session.GetOutputNameAllocated(i, allocator).get() << std::endl;
+            }
+
         } catch(const Ort::Exception& e) {
-            std::cerr << "Error loading the TorchScript module: " << e.what() << std::endl;
+            std::cerr << "Error loading the ONNX model: " << e.what() << std::endl;
             throw std::runtime_error("Error loading the ONNX model!");
         }
 
@@ -59,7 +71,11 @@ namespace t24e::local_mapper::cnn {
         // normalize the input image
         // cv::normalize(resizedImg, resizedImg, 0, 1, cv::NORM_MINMAX, CV_32F);
 
+        std::vector<> inputShape = {resizedImg.size.dims()};
+
         // convert the opencv image to a tensor
+        Ort::Value tensorImage = Ort::Value::CreateTensor(this->allocator, resizedImg.data, resizedImg.size.dims(),
+                                                          resizedImg.size.dims(), resizedImg.size.dims());
         at::Tensor tensorImage = torch::from_blob(resizedImg.data, {1, 3, resizedImg.rows, resizedImg.cols}, at::kByte);
         // reshape to CxHxW
         // tensorImage = tensorImage.permute({0, 3, 1, 2});

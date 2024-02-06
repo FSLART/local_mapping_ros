@@ -19,6 +19,8 @@
 #define MIN_SCORE_THRESHOLD 0.5
 #define IOU_THRESHOLD 0.5
 
+// Useful reference: https://github.com/leimao/ONNX-Runtime-Inference/blob/main/src/inference.cpp
+
 namespace t24e::local_mapper::cnn {
 
     class DAMO : private ConeDetector {
@@ -33,6 +35,9 @@ namespace t24e::local_mapper::cnn {
 
             /*! \brief The ONNX runtime session options. */
             Ort::SessionOptions sessionOptions;
+
+            /*! \brief ONNX allocator. */
+            Ort::AllocatorWithDefaultOptions allocator;
 
             /*! \brief Device to use (CPU or GPU). Defined in the CMakeLists.txt file. */
             #ifdef WITH_CUDA

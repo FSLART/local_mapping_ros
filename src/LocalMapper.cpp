@@ -9,7 +9,7 @@ namespace t24e {
         LocalMapper::LocalMapper() : Node("local_mapper") {
 
             // declare parameters
-            this->declare_parameter("model_path", "model/damo.pth");
+            this->declare_parameter("model_path", "model/damo.onnx");
             this->declare_parameter("map_rate", 10.0);
             this->declare_parameter("tf_lookup_rate", 10.0);
             this->declare_parameter("camera_frame_id", "camera_link");

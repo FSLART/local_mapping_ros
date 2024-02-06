@@ -1,7 +1,7 @@
 <launch>
     <node name="tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 1 base_link camera_link" />
     <node name="local_mapper" pkg="local_mapping_ros" exec="local_mapper_node" output="screen">
-        <param name="model_path" type="str" value="model/damo.pth" />
+        <param name="model_path" type="str" value="model/damo.onnx" />
         <param name="map_rate" type="float" value="10.0" />
         <param name="tf_loop_rate" type="float" value="5.0" />
         <param name="camera_frame_id" type="str" value="camera_link" />
