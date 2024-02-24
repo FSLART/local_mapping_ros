@@ -1,4 +1,4 @@
-FROM fslart/torch-opencv-ros
+FROM fslart/onnx-opencv-ros
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,11 +14,17 @@ WORKDIR /ros2_ws/src
 RUN git clone -b dev https://github.com/FSLART/lart_msgs.git
 WORKDIR /ros2_ws
 
+# install foxglove bridge
 RUN apt install ros-humble-foxglove-bridge -y
 
-# init rosdep
-RUN rosdep init
-RUN rosdep update
+# install ros dependencies
+RUN apt install -y ros-humble-sensor-msgs \
+    ros-humble-geometry-msgs \
+    ros-hubmle-visualization-msgs \
+    ros-humble-tf2-ros \
+    ros-humble-tf2 \
+    ros-humble-tf2-eigen \
+    ros-humble-cv-bridge
 
 # copy the ros package and build it
 RUN mkdir -p /ros2_ws/src/local_mapping_ros
@@ -46,3 +52,4 @@ CMD /bin/bash -c "source /opt/ros/humble/setup.bash && \
  cd /ros2_ws && \
  source install/local_setup.bash && \
  ros2 launch local_mapping_ros mapper.launch"
+
