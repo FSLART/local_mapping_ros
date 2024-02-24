@@ -1,4 +1,4 @@
-# local_mapping_ros
+# local\_mapping\_ros
 
 Local mapper package. The role of the local mapper is to take the RGB-D camera images and output the cone classes and positions in 3D space.
 
@@ -18,13 +18,22 @@ Configurations such as tf names or topics can be updated in the launch file of t
 ## Requirements
 - ROS 2 Humble
 - CMake
-- LibTorch
-- [lart_msgs](https://github.com/FSLART/lart_msgs)
+- ONNX Runtime
+- [lart\_msgs](https://github.com/FSLART/lart_msgs)
 - C++17 compiler
 
 or
 
 - Docker
+
+## Pre-requisites
+
+- Export the DAMO-YOLO model as ONNX. Instructions can be found in [DAMO-YOLO repository](https://github.com/FSLART/DAMO-YOLO), which are:
+```bash
+python tools/converter.py -f configs/damoyolo_tinynasL20_Nl_fsoco.py -c latest_ckpt.pth --batch_size 1 --img_size 640
+```
+- The `.pth` file can be found in the internal OneDrive. If you are an external team wanting to use this package, send an email to [this address](mailto:fsipleiria@ipleiria.pt) with the subject "[AD\_MODEL\_REQUEST] GitHub weights request".
+- Place the ONNX model in the `model` subdirectory of this repository.
 
 
 ## Building
