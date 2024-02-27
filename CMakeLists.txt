@@ -8,9 +8,6 @@ endif()
 # add or remove this to enable or disable CUDA
 set(WITH_CUDA ON)
 
-set(TORCH_PATH /usr/local/lib/libtorch)
-# set(CMAKE_PREFIX_PATH /usr/local/lib/libtorch)
-
 set(CMAKE_BUILD_TYPE Debug)
 
 # find dependencies
@@ -45,11 +42,7 @@ else()
   message(STATUS "Compiling without CUDA support")
 endif()
 
-find_package(Torch REQUIRED PATHS ${TORCH_PATH})
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-
-include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
+include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
 add_executable(local_mapper_node 
   src/local_mapper_node.cpp
@@ -64,9 +57,9 @@ add_executable(local_mapper_node
   src/post_processing/ThreadPool.cpp
   src/post_processing/Filtering.cpp
 )
-ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV Torch)
+ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV)
 
-target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${TORCH_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY})
+target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY})
 
 # Install launch files
 install(DIRECTORY 

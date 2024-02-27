@@ -20,7 +20,7 @@ RUN apt install ros-humble-foxglove-bridge -y
 # install ros dependencies
 RUN apt install -y ros-humble-sensor-msgs \
     ros-humble-geometry-msgs \
-    ros-hubmle-visualization-msgs \
+    ros-humble-visualization-msgs \
     ros-humble-tf2-ros \
     ros-humble-tf2 \
     ros-humble-tf2-eigen \
@@ -30,9 +30,6 @@ RUN apt install -y ros-humble-sensor-msgs \
 RUN mkdir -p /ros2_ws/src/local_mapping_ros
 COPY . /ros2_ws/src/local_mapping_ros
 WORKDIR /ros2_ws
-
-# install dependencies
-RUN rosdep install -i --from-path src --rosdistro humble -y
 
 # build the messages
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
