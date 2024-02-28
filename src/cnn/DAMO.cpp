@@ -11,27 +11,11 @@ namespace t24e::local_mapper::cnn {
         this->modelPath = modelPath;
         this->modelPathSet = true;
 
-        // initialize the device
-        #ifdef WITH_CUDA
-            this->device = torch::Device(torch::kCUDA);
-            this->validateDevice();
-        #else
-            this->device = torch::Device(torch::kCPU);
-        #endif
+        
 
         // initialize the thread pool manager
         this->threadPool = std::make_unique<ThreadPool>(std::thread::hardware_concurrency());
 
-    }
-
-    void DAMO::validateDevice() {
-
-        if(this->device == torch::Device(torch::kCUDA)) {
-            if(!torch::cuda::is_available()) {
-                std::cerr << "CUDA is not available!" << std::endl;
-                throw std::runtime_error("CUDA is not available!");
-            }
-        }
     }
 
     void DAMO::init() {
@@ -40,22 +24,17 @@ namespace t24e::local_mapper::cnn {
         if(!this->modelPathSet)
             throw std::runtime_error("Model path must be set before initialization!");
 
-        // load the torchscript model
+        // load the ONNX model
         try {
-            std::cout << "Loading the TorchScript module at " << this->modelPath << std::endl;
-            this->validateDevice();
+            std::cout << "Loading the ONNX model at " << this->modelPath << std::endl;
+            this->session = this->env.CreateSession(this->modelPath.c_str(), Ort::SessionOptions{nullptr});
+        } catch(const Ort::Exception& e) {
+            std::cerr << "Error loading the ONNX model: " << e.what() << std::endl;
+            throw std::runtime_error("Error loading the ONNX model!");
 
-            this->torchModule = torch::jit::load(this->modelPath, this->device);
-            this->torchModule.to(this->device, torch::kFloat);
-            
-            this->torchModule.eval(); // set the model to evaluation mode
-
-        } catch(const c10::Error& e) {
-            std::cerr << "Error loading the TorchScript module: " << e.what() << std::endl;
-            throw std::runtime_error("Error loading the TorchScript module!");
         }
 
-        std::cout << "TorchScript module loaded successfully!" << std::endl;
+        std::cout << "ONNX model loaded successfully!" << std::endl;
 
         this->initDone = true;
     }

@@ -25,28 +25,17 @@ namespace t24e::local_mapper::cnn {
     class DAMO : private ConeDetector {
 
         private:
-            /*! \brief The TorchScript model. */
-            torch::jit::script::Module torchModule;
 
-            /*! \brief Device to use (CPU or GPU). Defined in the CMakeLists.txt file. */
-            #ifdef WITH_CUDA
-                torch::Device device = torch::Device(torch::kCUDA);
-            #else
-                torch::Device device = torch::Device(torch::kCPU);
-            #endif
+            /*! \brief The ONNX session. */
+            Ort::Session session;
 
-            torch::DeviceType deviceType;
-
-            /*! \brief The TorchScript model path to load. */
+            /*! \brief The ONNX model path to load. */
             std::string modelPath;
 
             /*! \brief Was the model path set? */
             bool modelPathSet = false;
 
             std::unique_ptr<ThreadPool> threadPool;
-
-            /*! \brief Validate that the selected device is available. */
-            void validateDevice();
 
         public:
             DAMO(std::string& modelPath);
