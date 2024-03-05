@@ -27,7 +27,19 @@ namespace t24e::local_mapper::cnn {
         private:
 
             /*! \brief The ONNX session. */
-            Ort::Session session;
+            std::unique_ptr<Ort::Session> session;
+
+            /*! \brief The ONNX environment. */
+            std::unique_ptr<Ort::Env> env;
+
+            /*! \brief Input tensor dimensions. */
+            std::vector<int64_t> inputDims = {1, 3, DETECTOR_HEIGHT, DETECTOR_WIDTH};
+
+            /*! \brief Output probabilities tensor dimensions. */
+            std::vector<int64_t> outputProbsDims;
+
+            /*! \brief Output boxes tensor dimensions. */
+            std::vector<int64_t> outputBoxesDims;
 
             /*! \brief The ONNX model path to load. */
             std::string modelPath;

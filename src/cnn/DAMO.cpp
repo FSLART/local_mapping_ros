@@ -11,8 +11,6 @@ namespace t24e::local_mapper::cnn {
         this->modelPath = modelPath;
         this->modelPathSet = true;
 
-        
-
         // initialize the thread pool manager
         this->threadPool = std::make_unique<ThreadPool>(std::thread::hardware_concurrency());
 
@@ -24,15 +22,29 @@ namespace t24e::local_mapper::cnn {
         if(!this->modelPathSet)
             throw std::runtime_error("Model path must be set before initialization!");
 
-        // load the ONNX model
-        try {
-            std::cout << "Loading the ONNX model at " << this->modelPath << std::endl;
-            this->session = this->env.CreateSession(this->modelPath.c_str(), Ort::SessionOptions{nullptr});
-        } catch(const Ort::Exception& e) {
-            std::cerr << "Error loading the ONNX model: " << e.what() << std::endl;
-            throw std::runtime_error("Error loading the ONNX model!");
+        // create environment
+        this->env = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "DAMO-YOLO");
 
-        }
+        // create session
+        Ort::SessionOptions sessionOptions;
+        sessionOptions.AppendExecutionProvider_CUDA(0); // enable CUDA
+        sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL); // enable optimizations
+        this->session = std::make_unique<Ort::Session>(*this->env, this->modelPath.c_str(), sessionOptions);
+
+        // get the input dimensions
+        Ort::TypeInfo inputTypeInfo = this->session->GetInputTypeInfo(0);
+        auto tensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
+        this->inputDims = tensorInfo.GetShape();
+
+        // get the probabilities output dimensions
+        Ort::TypeInfo probsTypeInfo = this->session->GetOutputTypeInfo(0);
+        auto probsTensorInfo = probsTypeInfo.GetTensorTypeAndShapeInfo();
+        this->outputProbsDims = probsTensorInfo.GetShape();
+
+        // get the boxes output dimensions
+        Ort::TypeInfo boxesTypeInfo = this->session->GetOutputTypeInfo(1);
+        auto boxesTensorInfo = boxesTypeInfo.GetTensorTypeAndShapeInfo();
+        this->outputBoxesDims = boxesTensorInfo.GetShape();
 
         std::cout << "ONNX model loaded successfully!" << std::endl;
 
@@ -42,57 +54,28 @@ namespace t24e::local_mapper::cnn {
     std::vector<bounding_box_t> DAMO::detectCones(cv::Mat img) {
 
         // resize the image to inference dimensions
-        cv::Mat resizedImg;
-        cv::resize(img, resizedImg, cv::Size(DETECTOR_WIDTH, DETECTOR_HEIGHT));
+        cv::resize(img, img, cv::Size(DETECTOR_WIDTH, DETECTOR_HEIGHT));
 
-        // normalize the input image
-        // cv::normalize(resizedImg, resizedImg, 0, 1, cv::NORM_MINMAX, CV_32F);
+        // normalize the pixel values
+        cv::Mat normalizedImg;
+        img.convertTo(normalizedImg, CV_32F, 2.0 / 255.0, -1.0);
 
-        // convert the opencv image to a tensor
-        at::Tensor tensorImage = torch::from_blob(resizedImg.data, {1, 3, resizedImg.rows, resizedImg.cols}, at::kByte);
-        // reshape to CxHxW
-        // tensorImage = tensorImage.permute({0, 3, 1, 2});
+        // convert HWC to CHW
+        cv::Mat chwImg;
+        cv::dnn::blobFromImage(normalizedImg, chwImg);
 
-        // convert to float and normalize
-        tensorImage = tensorImage.to(at::kFloat) / 255.0f;
+        // assign the values to a vector
+        std::vector<float> inputTensorValues(DETECTOR_HEIGHT * DETECTOR_WIDTH * 3);
+        inputTensorValues.assign(chwImg.begin<float>(), chwImg.end<float>());
 
-        // normalize to zero mean and unit standard deviation
-        float mean = tensorImage.mean().item().toFloat(); // obtain the mean
-        float std = tensorImage.std().item().toFloat(); // obtain the standard deviation
-        tensorImage = (tensorImage - mean) / std; // normalize
+        // create a tensor from the input values
+        std::vector<Ort::Value> inputTensors;
+        Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
+        inputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, inputTensorValues.data(), inputTensorValues.size(), inputDims.data(), inputDims.size()));
 
-        // std::cout << resizedImg << std::endl;
-
-        // check the device is available
-        // this->validateDevice();
-
-        try {
-            // move the tensor to the intended device
-            tensorImage = tensorImage.to(this->device);
-        } catch(const std::exception& e) {
-            std::cerr << "Error moving the tensor to the device: " << e.what() << std::endl;
-            throw std::runtime_error("Error moving the tensor to the device!");
-        }
-
-        // disable gradient tracking
-        torch::NoGradGuard no_grad;
-
-        // execute the model
-        auto inference = this->torchModule.forward({tensorImage});
-
-        auto outputs = inference.toTuple();
-
-        /*
-            tensors:
-            [0]: [1, 8400, 5] -> class probabilities
-            [1]: [1, 8400, 4] -> box origin and dimensions
-        */
-
-        // convert the class probabilities to tensor
-        torch::Tensor classProbs = outputs->elements()[0].toTensor();
-
-        // convert the bounding boxes to tensor
-        torch::Tensor bboxes = outputs->elements()[1].toTensor();
+        // TODO: create the output tensors
+        // TODO: run the inference
+        // TODO: refactor post processing code to use ONNX tensors instead of Torch tensors
 
         // final vector of bounding boxes
         std::vector<bounding_box_t> bounding_boxes;
