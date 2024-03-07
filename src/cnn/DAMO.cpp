@@ -35,16 +35,22 @@ namespace t24e::local_mapper::cnn {
         Ort::TypeInfo inputTypeInfo = this->session->GetInputTypeInfo(0);
         auto tensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
         this->inputDims = tensorInfo.GetShape();
+        this->inputSize = inputDims[1] * inputDims[2] * inputDims[3];
 
         // get the probabilities output dimensions
         Ort::TypeInfo probsTypeInfo = this->session->GetOutputTypeInfo(0);
         auto probsTensorInfo = probsTypeInfo.GetTensorTypeAndShapeInfo();
         this->outputProbsDims = probsTensorInfo.GetShape();
+        this->outputProbsSize = outputProbsDims[1] * outputProbsDims[2];
 
         // get the boxes output dimensions
         Ort::TypeInfo boxesTypeInfo = this->session->GetOutputTypeInfo(1);
         auto boxesTensorInfo = boxesTypeInfo.GetTensorTypeAndShapeInfo();
         this->outputBoxesDims = boxesTensorInfo.GetShape();
+        this->outputProbsSize = outputBoxesDims[1] * outputBoxesDims[2];
+
+        // get the memory info
+        this->memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
         std::cout << "ONNX model loaded successfully!" << std::endl;
 
@@ -54,7 +60,7 @@ namespace t24e::local_mapper::cnn {
     std::vector<bounding_box_t> DAMO::detectCones(cv::Mat img) {
 
         // resize the image to inference dimensions
-        cv::resize(img, img, cv::Size(DETECTOR_WIDTH, DETECTOR_HEIGHT));
+        cv::resize(img, img, cv::Size(this->inputDims[3], this->inputDims[2]));
 
         // normalize the pixel values
         cv::Mat normalizedImg;
@@ -70,15 +76,33 @@ namespace t24e::local_mapper::cnn {
 
         // create a tensor from the input values
         std::vector<Ort::Value> inputTensors;
-        Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
-        inputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, inputTensorValues.data(), inputTensorValues.size(), inputDims.data(), inputDims.size()));
+        inputTensors.push_back(Ort::Value::CreateTensor<float>(this->memoryInfo, inputTensorValues.data(), inputTensorValues.size(), inputDims.data(), inputDims.size()));
 
-        // TODO: create the output tensors
-        // TODO: run the inference
+        // create the output tensors
+        std::vector<Ort::Value> outputTensors;
+        // create the probabilities vector
+        std::vector<float> outputProbValues(this->outputProbsSize);
+        // push the probabilities tensor to the output tensors vector
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(this->memoryInfo, outputProbValues.data(), outputProbsSize, outputProbsDims.data(), outputProbsDims.size()));
+        // create the bounding boxes vector
+        std::vector<float> outputBoxesValues(this->outputBoxesSize);
+        // push the bounding boxes tensor to the output tensors vector
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(this->memoryInfo, outputBoxesValues.data(), outputBoxesDims));
+
+        // run the inference
+        this->session->Run(Ort::RunOptions{nullptr}, inputTensors.data(), inputTensors.size(), outputTensors.data(), outputProbsSize, outputBoxesDims.data(), outputBoxesDims.size());
+
+        // get the probabilities tensor
+        auto classProbs = outputTensors[0].GetTensorMutableData<float>();
+        // get the bounding boxes tensor
+        auto bboxes = outputTensors[1].GetTensorMutableData<float>();
+
         // TODO: refactor post processing code to use ONNX tensors instead of Torch tensors
 
         // final vector of bounding boxes
         std::vector<bounding_box_t> bounding_boxes;
+
+        /*
 
         #ifdef WITH_CUDA
 
@@ -95,6 +119,8 @@ namespace t24e::local_mapper::cnn {
                         IOU_THRESHOLD, bboxes);
 
         #endif
+
+        */
 
         // return a vector of bounding boxes
         return bounding_boxes;

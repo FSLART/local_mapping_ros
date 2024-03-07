@@ -32,14 +32,50 @@ namespace t24e::local_mapper::cnn {
             /*! \brief The ONNX environment. */
             std::unique_ptr<Ort::Env> env;
 
+            /*! \brief ONNX memory info. */
+            Ort::MemoryInfo memoryInfo;
+
+            /*! \brief ONNX allocator. */
+            Ort::AllocatorWithDefaultOptions allocator;
+
+            /*! \brief Input tensor name. */
+            char *inputName;
+
+            /*! \brief Input names. */
+            std::vector<const char*> inputNames;
+
             /*! \brief Input tensor dimensions. */
-            std::vector<int64_t> inputDims = {1, 3, DETECTOR_HEIGHT, DETECTOR_WIDTH};
+            std::vector<int64_t> inputDims;
+
+            /*! \brief Number of elements of the input probabilities tensor. */
+            size_t inputSize;
+
+            /*! \brief Input tensor name. */
+            char* inputName;
+
+            /*! \brief Output probabilities tensor name. */
+            char* outputProbsName;
 
             /*! \brief Output probabilities tensor dimensions. */
             std::vector<int64_t> outputProbsDims;
 
+            /*! \brief Number of elements of the output probabilities tensor. */
+            size_t outputProbsSize;
+
+            /*! \brief Output probabilities tensor name. */
+            char* outputProbsName;
+
+            /*! \brief Output bounding boxes tensor name. */
+            char* outputBoxesName;
+
             /*! \brief Output boxes tensor dimensions. */
             std::vector<int64_t> outputBoxesDims;
+
+            /*! \brief Number of elements of the output bounding boxes tensor. */
+            size_t outputBoxesSize;
+
+            /*! \brief Output bounding boxes tensor name. */
+            char* outputBoxesName;
 
             /*! \brief The ONNX model path to load. */
             std::string modelPath;
