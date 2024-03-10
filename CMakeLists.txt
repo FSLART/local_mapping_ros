@@ -31,6 +31,9 @@ find_package(lart_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# add ONNX runtime libraries
+link_directories(/tmp/onnx/onnxruntime/build/RelWithDebInfo)
+
 # verify that "WITH_CUDA" is set
 if(WITH_CUDA)
   message(STATUS "Compiling with CUDA support")
@@ -42,7 +45,7 @@ else()
   message(STATUS "Compiling without CUDA support")
 endif()
 
-include_directories(include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
+include_directories(include /tmp/onnx/onnxruntime/include ${OpenCV_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
 add_executable(local_mapper_node 
   src/local_mapper_node.cpp
@@ -59,7 +62,7 @@ add_executable(local_mapper_node
 )
 ament_target_dependencies(local_mapper_node rclcpp std_msgs sensor_msgs geometry_msgs visualization_msgs lart_msgs tf2 tf2_ros tf2_eigen cv_bridge OpenCV)
 
-target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY})
+target_link_libraries(local_mapper_node ${OpenCV_LIBRARIES} ${Eigen3_LIBS} ${CURL_LIBRARIES} ${TIFF_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} ${CUDA_cusparse_LIBRARY} onnxruntime onnxruntime_providers_cuda)
 
 # Install launch files
 install(DIRECTORY 

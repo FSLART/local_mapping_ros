@@ -14,6 +14,11 @@ WORKDIR /ros2_ws/src
 RUN git clone -b dev https://github.com/FSLART/lart_msgs.git
 WORKDIR /ros2_ws
 
+# build lart_msgs
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
+ cd /ros2_ws && \
+ colcon build --packages-select lart_msgs"
+
 # install foxglove bridge
 RUN apt install ros-humble-foxglove-bridge -y
 
@@ -30,11 +35,6 @@ RUN apt install -y ros-humble-sensor-msgs \
 RUN mkdir -p /ros2_ws/src/local_mapping_ros
 COPY . /ros2_ws/src/local_mapping_ros
 WORKDIR /ros2_ws
-
-# build the messages
-RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
- cd /ros2_ws && \
- colcon build --packages-select lart_msgs"
 
 # build this package
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
